@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel de Seguridad — HTTP Conexión</title>
+  <style>
+    :root{font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;}
+    body{margin:0;padding:2rem;background:#0f1218;color:#e8ecf1}
+    .card{background:#141a22;border:1px solid #243041;border-radius:14px;padding:1rem;margin:0 auto 1rem;max-width:980px;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+    h1,h2{margin:.2rem 0 1rem 0}
+    label{display:block;margin:.7rem 0 .3rem;font-weight:600}
+    input[type=text], input[type=number], textarea{width:100%;padding:.7rem;border-radius:10px;border:1px solid #3a4a5e;background:#0e141b;color:#dfe6ef}
+    textarea{min-height:90px}
+    button{padding:.6rem 1rem;border-radius:12px;border:1px solid #3a4a5e;background:#1b2531;color:#e8ecf1;cursor:pointer}
+    button:hover{filter:brightness(1.1)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .muted{opacity:.8;font-size:.9rem}
+    .flex{display:flex;gap:.5rem;align-items:center}
+    .list{border:1px dashed #33475c;border-radius:12px;padding:.7rem;margin:.6rem 0}
+    .hidden{display:none}
+    .bad{color:#ff6f6f}
+    .tag{display:inline-block;padding:.2rem .5rem;border-radius:999px;background:#223145;border:1px solid #33506f;margin-left:.4rem;font-size:.85rem}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Panel de Seguridad — HTTP Conexión</h1>
+    <p class="muted">Inicia sesión con Google (solo <b>elcris1823@gmail.com</b>). Desde aquí podrás actualizar llaves de encriptado, forzar versiones y gestionar enlaces de anuncios.</p>
+    <ol class="muted">
+      <li>Edita este archivo y pega tu <code>firebaseConfig</code> (lo copias desde Firebase → Configuración del proyecto → tus apps → Web).</li>
+      <li>Sube este archivo a Firebase Hosting o a tu hosting. Agrega el dominio en Auth → Authorized domains.</li>
+    </ol>
+    <div id="auth" class="flex">
+      <button id="loginBtn">Iniciar sesión</button>
+      <button id="logoutBtn" class="hidden">Salir</button>
+      <span id="who" class="tag hidden"></span>
+    </div>
+  </div>
+
+  <div id="guard" class="card hidden">
+    <h2>Configuración Global</h2>
+    <div class="row">
+      <div>
+        <label>Mínimo de versión (bloquea apps viejas)</label>
+        <input id="minVersion" type="text" placeholder="3.0.45">
+      </div>
+      <div>
+        <label>Versión actual (sugerida)</label>
+        <input id="latestVersion" type="text" placeholder="3.0.46">
+      </div>
+    </div>
+
+    <label>Llave de encriptado (texto o base64) <span class="muted">(recomendado rotarla)</span></label>
+    <textarea id="encKey" placeholder="pega aquí tu llave…"></textarea>
+
+    <div class="row">
+      <div>
+        <label>Versión de la llave</label>
+        <input id="encKeyVersion" type="number" value="1">
+      </div>
+      <div>
+        <label>Habilitar app (kill‑switch)</label>
+        <select id="enabled"><option value="true">Sí</option><option value="false">No</option></select>
+      </div>
+    </div>
+
+    <h2>Enlaces de anuncios</h2>
+    <div id="adList" class="list"></div>
+    <div class="flex">
+      <input id="adName" type="text" placeholder="nombre">
+      <input id="adUrl" type="text" placeholder="https://tu.link">
+      <button id="addAd">Añadir enlace</button>
+    </div>
+
+    <div class="flex" style="margin-top:1rem">
+      <button id="save">Guardar todo</button>
+      <span id="status" class="muted"></span>
+    </div>
+  </div>
+
+  <script type="module">
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_PROYECTO.firebaseapp.com",
+      projectId: "TU_PROYECTO",
+      storageBucket: "TU_PROYECTO.appspot.com",
+      messagingSenderId: "0000000000",
+      appId: "1:0000000000:web:XXXXXXXXXXXX"
+    };
+
+    const ALLOW = ["elcris1823@gmail.com"];
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const $ = (id)=>document.getElementById(id);
+    const guard = $("guard");
+    const who = $("who");
+
+    $("loginBtn").onclick = async () => { await signInWithPopup(auth, new GoogleAuthProvider()); };
+    $("logoutBtn").onclick = ()=>signOut(auth);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { guard.classList.add("hidden"); $("logoutBtn").classList.add("hidden"); who.classList.add("hidden"); $("loginBtn").classList.remove("hidden"); return; }
+      $("loginBtn").classList.add("hidden"); $("logoutBtn").classList.remove("hidden");
+      who.textContent = user.email; who.classList.remove("hidden");
+      if (!ALLOW.includes(user.email)) { who.textContent += " (sin permisos)"; who.classList.add("bad"); guard.classList.add("hidden"); return; }
+      who.classList.remove("bad"); guard.classList.remove("hidden"); await loadConfig();
+    });
+
+    async function loadConfig(){
+      const ref = doc(db, "config", "global");
+      const snap = await getDoc(ref);
+      const data = snap.exists() ? snap.data() : {};
+      $("minVersion").value = data.minVersion ?? "";
+      $("latestVersion").value = data.latestVersion ?? "";
+      $("encKey").value = data.encKey ?? "";
+      $("encKeyVersion").value = data.encKeyVersion ?? 1;
+      $("enabled").value = String(data.enabled ?? true);
+      renderAds(data.ads?.links ?? []);
+    }
+
+    function renderAds(links){
+      const host = $("adList");
+      host.innerHTML = "";
+      links.forEach((l,idx)=>{
+        const row = document.createElement("div");
+        row.className="flex";
+        row.innerHTML = `
+          <span class="tag">#${idx+1}</span>
+          <input type="text" value="${l.name ?? ""}" data-idx="${idx}" data-k="name">
+          <input type="text" value="${l.url ?? ""}" data-idx="${idx}" data-k="url">
+          <button data-idx="${idx}" data-k="del">Eliminar</button>
+        `;
+        host.appendChild(row);
+      });
+      host.onclick = (e)=>{
+        if (e.target.dataset?.k === "del"){
+          links.splice(Number(e.target.dataset.idx),1);
+          renderAds(links);
+        }
+      };
+      host.oninput = (e)=>{
+        const idx = Number(e.target.dataset.idx);
+        const k = e.target.dataset.k;
+        links[idx][k] = e.target.value;
+      };
+      $("addAd").onclick = ()=>{ links.push({name:"nuevo", url:"https://"}); renderAds(links); };
+      $("save").onclick = async ()=>{
+        const ref = doc(db, "config", "global");
+        await setDoc(ref, {
+          minVersion: $("minVersion").value.trim(),
+          latestVersion: $("latestVersion").value.trim(),
+          encKey: $("encKey").value.trim(),
+          encKeyVersion: Number($("encKeyVersion").value || 1),
+          enabled: $("enabled").value === "true",
+          ads: { links },
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        $("status").textContent = "Guardado ✔";
+        setTimeout(()=>$("status").textContent="", 2000);
+      };
+    }
+  </script>
+</body>
+</html>
