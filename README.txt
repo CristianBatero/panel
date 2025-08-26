@@ -1,6 +1,6 @@
 HTTP Conexión — Panel de Seguridad (CrisDEV)
 
-Admin permitido: elcris1823@gmail.com
+Admin permitido: soportecrisdev@gmail.com
 
 PASOS:
 1) Firebase Console:
