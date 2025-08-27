@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>HTTP Conexión — Administración</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" href="../asset/img/web.png">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    body{background:#000;color:#dff5df;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:980px;margin:40px auto;padding:16px}
+    .card{background:#101010;border:1px solid #1e2f1e;border-radius:14px;padding:18px;box-shadow:0 18px 40px rgba(0,0,0,.3)}
+    .row{display:flex;gap:12px;align-items:center;justify-content:space-between}
+    .btn{padding:9px 14px;border-radius:10px;border:1px solid #184018;background:#072507;color:#bfffc4;cursor:pointer;text-decoration:none}
+    .btn:hover{filter:brightness(1.06)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <h2 style="margin:0;display:flex;align-items:center;gap:.6rem">
+          <img src="../asset/img/web.png" style="height:26px" alt=""> HTTP Conexión — Administración
+        </h2>
+        <a class="btn" href="/view/logout.html">Cerrar sesión</a>
+      </div>
+      <hr style="border-color:#1e2f1e;border-width:1px;border-style:solid;margin:14px 0">
+      <div id="who" style="opacity:.9;margin-bottom:10px"></div>
+
+      <!-- Aquí puedes ir montando tus secciones (General, Seguridad, Ads, Usuarios, etc.) -->
+      <p>Bienvenido al panel. Desde aquí podrás gestionar configuraciones, anuncios y usuarios.</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { requireAuth, auth } from "../js/auth.js";
+    const user = await requireAuth("/view/login.html");
+    document.getElementById("who").textContent = `Sesión de: ${user.email}`;
+  </script>
+</body>
+</html>
