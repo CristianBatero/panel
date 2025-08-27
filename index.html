@@ -18,20 +18,22 @@
     .flex{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
     .list{border:1px dashed #33475c;border-radius:12px;padding:.7rem;margin:.6rem 0}
     .hidden{display:none}
-    .bad{color:#ff6f6f}
     .tag{display:inline-block;padding:.2rem .5rem;border-radius:999px;background:#223145;border:1px solid #33506f;margin-left:.4rem;font-size:.85rem}
     button{padding:.6rem 1rem;border-radius:12px;border:1px solid #3a4a5e;background:#1b2531;color:#e8ecf1;cursor:pointer}
     button:hover{filter:brightness(1.1)}
+    .danger{color:#ff8080}
   </style>
 </head>
 <body>
   <div class="card">
     <h1>HTTP Conexión — Panel</h1>
-    <p class="muted">Solo <b>elcris1823@gmail.com</b> puede editar. Administra <i>kill-switch, versiones, cifrado, políticas, y anuncios (banner / app-open / interstitial / rewarded con rotación)</i>.</p>
+    <p class="muted">
+      Inicia sesión con Google (<b>solo administradores autorizados</b>). Desde aquí podrás
+      actualizar llaves/cifrado, políticas de seguridad, versiones y anuncios (banner, app-open, interstitial, rewarded).
+    </p>
     <div class="flex">
       <button id="loginBtn">Iniciar sesión</button>
       <button id="logoutBtn" class="hidden">Salir</button>
-      <span id="who" class="tag hidden"></span>
       <span id="status" class="muted"></span>
     </div>
   </div>
@@ -224,10 +226,13 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+    import {
+      getAuth, signInWithPopup, signInWithRedirect, getRedirectResult,
+      GoogleAuthProvider, onAuthStateChanged, signOut
+    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-    // TU firebaseConfig (el tuyo real)
+    // Tu firebaseConfig (http-conexion)
     const firebaseConfig = {
       apiKey: "AIzaSyBdV3vmyeDWv1rImwxHTTFm4uwczdKlmL0",
       authDomain: "http-conexion.firebaseapp.com",
@@ -238,50 +243,68 @@
       appId: "1:149721662763:web:e6055ec5eef1f73216b16e"
     };
 
+    // Lista local de admins (además de tus Reglas de Firestore)
     const ALLOW = ["elcris1823@gmail.com"];
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    auth.languageCode = "es";
     const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
 
-    const $ = id => document.getElementById(id);
+    const $ = (id)=>document.getElementById(id);
     const guard = $("guard");
-    const who = $("who");
     const statusEl = $("status");
 
-    $("loginBtn").onclick = async () => { await signInWithPopup(auth, new GoogleAuthProvider()); };
-    $("logoutBtn").onclick = () => signOut(auth);
+    // ==== Login con fallback =====
+    $("loginBtn").onclick = async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (e) {
+        if (e?.code === "auth/popup-blocked" || e?.code === "auth/cancelled-popup-request") {
+          await signInWithRedirect(auth, provider);
+          return;
+        }
+        if (e?.code === "auth/unauthorized-domain")
+          return alert("Agrega este dominio a Authentication → Configuración → Dominios autorizados.");
+        if (e?.code === "auth/operation-not-allowed")
+          return alert("Habilita el proveedor Google en Authentication → Método de acceso.");
+        alert("Error de inicio de sesión: " + (e?.message || e));
+      }
+    };
+    getRedirectResult(auth).catch(e=>{
+      if (e?.code === "auth/unauthorized-domain")
+        alert("Agrega el dominio a Dominios autorizados en Firebase.");
+    });
+    $("logoutBtn").onclick = ()=> signOut(auth);
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         guard.classList.add("hidden");
         $("logoutBtn").classList.add("hidden");
-        who.classList.add("hidden");
         $("loginBtn").classList.remove("hidden");
         return;
       }
       $("loginBtn").classList.add("hidden");
       $("logoutBtn").classList.remove("hidden");
-      who.textContent = user.email;
-      who.classList.remove("hidden");
-      if (!ALLOW.includes(user.email)) {
-        who.textContent += " (sin permisos)";
-        who.classList.add("bad");
+
+      if (!ALLOW.includes(user.email || "")) {
         guard.classList.add("hidden");
+        alert("Esta cuenta no tiene permisos de edición.");
         return;
       }
-      who.classList.remove("bad");
       guard.classList.remove("hidden");
       await load();
     });
 
-    // Helpers
+    // ===== Helpers =====
     const toCSV = (arr)=> (arr||[]).join(",");
     const fromCSV = (s)=> (s||"").split(/\s*,\s*/).map(x=>x.trim()).filter(Boolean);
     const fromLines = (s)=> (s||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
 
     let links = [];
 
+    // ===== Cargar datos =====
     async function load(){
       const ref = doc(db, "config", "global");
       const snap = await getDoc(ref);
@@ -293,7 +316,7 @@
       $("minVersion").value   = d.minVersion ?? "";
       $("latestVersion").value= d.latestVersion ?? "";
 
-      // Security
+      // Seguridad
       const sec = d.security || {};
       const crypto = sec.crypto || {};
       $("crypto_alg").value       = crypto.alg ?? "AES-256-GCM";
@@ -356,6 +379,7 @@
       renderLinks();
     }
 
+    // ===== Enlaces =====
     function renderLinks(){
       const host = document.getElementById("adList");
       host.innerHTML = "";
@@ -386,6 +410,7 @@
       };
     }
 
+    // ===== Guardar =====
     document.getElementById("save").onclick = async ()=>{
       statusEl.textContent = "Guardando…";
       const ref = doc(db, "config", "global");
@@ -469,7 +494,7 @@
         statusEl.textContent = "Guardado ✔";
         setTimeout(()=> statusEl.textContent = "", 2200);
       } catch (e) {
-        statusEl.textContent = "Error al guardar: " + (e?.message || e);
+        statusEl.innerHTML = '<span class="danger">Error al guardar: ' + (e?.message || e) + '</span>';
       }
     };
   </script>
