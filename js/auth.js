@@ -1,7 +1,8 @@
 // /js/auth.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {
-  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut,
+  GoogleAuthProvider, signInWithPopup, EmailAuthProvider, linkWithCredential
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
   getFirestore, doc, setDoc, serverTimestamp, increment
@@ -46,7 +47,6 @@ export async function upsertUserProfile(user, extra = {}) {
       { merge: true }
     );
   } catch (err) {
-    // No bloqueamos el flujo si falla la escritura por reglas/red
     console.warn("[upsertUserProfile] fallo:", err?.code || err);
   }
 }
@@ -61,7 +61,6 @@ export function requireAuth(redirectTo = "/view/login.html") {
     });
   });
 }
-
 export function requireAnon(redirectTo = "/view/admin.html") {
   return new Promise((resolve) => {
     onAuthStateChanged(auth, (user) => {
@@ -72,17 +71,31 @@ export function requireAnon(redirectTo = "/view/admin.html") {
   });
 }
 
-// Login / Logout
+// Email/Password
 export function loginWithEmail(email, pass) {
   return signInWithEmailAndPassword(auth, email, pass);
 }
 
+// Google
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
+export function loginWithGooglePopup() {
+  return signInWithPopup(auth, googleProvider);
+}
+
+// Linkear contraseña al usuario actual (opcional)
+export async function linkPasswordToCurrentUser(email, newPassword) {
+  const cred = EmailAuthProvider.credential(email, newPassword);
+  return linkWithCredential(auth.currentUser, cred);
+}
+
+// Logout
 export async function logoutAndGo(redirectTo = "/view/login.html") {
   await signOut(auth);
   location.replace(redirectTo);
 }
 
-// Helpers “recordarme”
+// “Recordarme”
 const LS_KEY_EMAIL = "panel_email";
 export function rememberEmail(email) {
   try { localStorage.setItem(LS_KEY_EMAIL, email || ""); } catch {}
