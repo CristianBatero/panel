@@ -1,141 +1,371 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Panel de Seguridad — HTTP Conexión</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HTTP Conexión — Panel (Seguridad + Ads)</title>
   <style>
-    :root{font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;}
-    body{margin:0;padding:2rem;background:#0f1218;color:#e8ecf1}
-    .card{background:#141a22;border:1px solid #243041;border-radius:14px;padding:1rem;margin:0 auto 1rem;max-width:980px;box-shadow:0 6px 24px rgba(0,0,0,.3)}
-    h1,h2{margin:.2rem 0 1rem 0}
-    label{display:block;margin:.7rem 0 .3rem;font-weight:600}
-    input[type=text], input[type=number], textarea{width:100%;padding:.7rem;border-radius:10px;border:1px solid #3a4a5e;background:#0e141b;color:#dfe6ef}
-    textarea{min-height:90px}
-    button{padding:.6rem 1rem;border-radius:12px;border:1px solid #3a4a5e;background:#1b2531;color:#e8ecf1;cursor:pointer}
-    button:hover{filter:brightness(1.1)}
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    body{margin:0;padding:24px;background:#0f1218;color:#e8ecf1}
+    .card{background:#141a22;border:1px solid #243041;border-radius:14px;padding:16px;margin:0 auto 16px;max-width:1100px;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+    h1,h2{margin:.2rem 0 .8rem 0}
+    label{display:block;margin:.6rem 0 .3rem;font-weight:600}
+    input[type=text],input[type=number],textarea,select{width:100%;padding:.6rem;border-radius:10px;border:1px solid #3a4a5e;background:#0e141b;color:#dfe6ef}
+    textarea{min-height:70px}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
     .muted{opacity:.8;font-size:.9rem}
-    .flex{display:flex;gap:.5rem;align-items:center}
+    .flex{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
     .list{border:1px dashed #33475c;border-radius:12px;padding:.7rem;margin:.6rem 0}
     .hidden{display:none}
     .bad{color:#ff6f6f}
     .tag{display:inline-block;padding:.2rem .5rem;border-radius:999px;background:#223145;border:1px solid #33506f;margin-left:.4rem;font-size:.85rem}
+    button{padding:.6rem 1rem;border-radius:12px;border:1px solid #3a4a5e;background:#1b2531;color:#e8ecf1;cursor:pointer}
+    button:hover{filter:brightness(1.1)}
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>Panel de Seguridad — HTTP Conexión</h1>
-    <p class="muted">Inicia sesión con Google (solo <b>elcris1823@gmail.com</b>). Desde aquí podrás actualizar llaves de encriptado, forzar versiones y gestionar enlaces de anuncios.</p>
-    <ol class="muted">
-      <li>Edita este archivo y pega tu <code>firebaseConfig</code> (lo copias desde Firebase → Configuración del proyecto → tus apps → Web).</li>
-      <li>Sube este archivo a Firebase Hosting o a tu hosting. Agrega el dominio en Auth → Authorized domains.</li>
-    </ol>
-    <div id="auth" class="flex">
+    <h1>HTTP Conexión — Panel</h1>
+    <p class="muted">Solo <b>elcris1823@gmail.com</b> puede editar. Administra <i>kill-switch, versiones, cifrado, políticas, y anuncios (banner / app-open / interstitial / rewarded con rotación)</i>.</p>
+    <div class="flex">
       <button id="loginBtn">Iniciar sesión</button>
       <button id="logoutBtn" class="hidden">Salir</button>
       <span id="who" class="tag hidden"></span>
-    </div>
-  </div>
-
-  <div id="guard" class="card hidden">
-    <h2>Configuración Global</h2>
-    <div class="row">
-      <div>
-        <label>Mínimo de versión (bloquea apps viejas)</label>
-        <input id="minVersion" type="text" placeholder="3.0.45">
-      </div>
-      <div>
-        <label>Versión actual (sugerida)</label>
-        <input id="latestVersion" type="text" placeholder="3.0.46">
-      </div>
-    </div>
-
-    <label>Llave de encriptado (texto o base64) <span class="muted">(recomendado rotarla)</span></label>
-    <textarea id="encKey" placeholder="pega aquí tu llave…"></textarea>
-
-    <div class="row">
-      <div>
-        <label>Versión de la llave</label>
-        <input id="encKeyVersion" type="number" value="1">
-      </div>
-      <div>
-        <label>Habilitar app (kill‑switch)</label>
-        <select id="enabled"><option value="true">Sí</option><option value="false">No</option></select>
-      </div>
-    </div>
-
-    <h2>Enlaces de anuncios</h2>
-    <div id="adList" class="list"></div>
-    <div class="flex">
-      <input id="adName" type="text" placeholder="nombre">
-      <input id="adUrl" type="text" placeholder="https://tu.link">
-      <button id="addAd">Añadir enlace</button>
-    </div>
-
-    <div class="flex" style="margin-top:1rem">
-      <button id="save">Guardar todo</button>
       <span id="status" class="muted"></span>
     </div>
   </div>
 
+  <div id="guard" class="card hidden">
+    <h2>General</h2>
+    <div class="row">
+      <div>
+        <label>App habilitada (kill-switch)</label>
+        <select id="enabled"><option value="true">Sí</option><option value="false">No</option></select>
+      </div>
+      <div>
+        <label>URL de actualización (Play/Web)</label>
+        <input id="updateUrl" type="text" placeholder="https://play.google.com/..." />
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Mínimo de versión</label>
+        <input id="minVersion" type="text" placeholder="3.0.45" />
+      </div>
+      <div>
+        <label>Versión actual</label>
+        <input id="latestVersion" type="text" placeholder="3.0.45" />
+      </div>
+    </div>
+
+    <h2>Seguridad ▸ Cifrado</h2>
+    <div class="row">
+      <div>
+        <label>Algoritmo</label>
+        <select id="crypto_alg">
+          <option value="AES-256-GCM">AES-256-GCM</option>
+          <option value="XChaCha20-Poly1305">XChaCha20-Poly1305</option>
+        </select>
+        <span class="muted">Puedes dejar la llave vacía por ahora.</span>
+      </div>
+      <div>
+        <label>Versión de la llave</label>
+        <input id="encKeyVersion" type="number" value="1" />
+      </div>
+    </div>
+    <label>Llave (texto/base64) — opcional ahora</label>
+    <textarea id="encKey" placeholder="Deja vacío si aún no usarás la llave desde servidor."></textarea>
+
+    <div class="row3">
+      <div>
+        <label>KDF</label>
+        <select id="kdf_type">
+          <option value="none">none</option>
+          <option value="PBKDF2">PBKDF2</option>
+        </select>
+      </div>
+      <div>
+        <label>Iteraciones KDF</label>
+        <input id="kdf_iterations" type="number" value="100000" />
+      </div>
+      <div>
+        <label>IV/Nonce bytes</label>
+        <input id="iv_bytes" type="number" value="12" />
+      </div>
+    </div>
+    <label>Salt (base64) opcional</label>
+    <input id="kdf_salt" type="text" />
+
+    <h2>Seguridad ▸ Políticas</h2>
+    <div class="row">
+      <div>
+        <label>Requerir App Check (Play Integrity)</label>
+        <select id="appCheckRequired"><option value="true">Sí</option><option value="false">No</option></select>
+      </div>
+      <div>
+        <label>Requerir firma SHA-256</label>
+        <select id="requireSignature"><option value="false">No</option><option value="true">Sí</option></select>
+      </div>
+    </div>
+    <label>sigSha256 (huella del APK)</label>
+    <input id="sigSha256" type="text" placeholder="hex…" />
+
+    <div class="row">
+      <div>
+        <label>Bloquear root</label>
+        <select id="blockRoot"><option value="true">Sí</option><option value="false">No</option></select>
+      </div>
+      <div>
+        <label>Bloquear emulador</label>
+        <select id="blockEmu"><option value="true">Sí</option><option value="false">No</option></select>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Bloquear depuración/ADB</label>
+        <select id="blockDebug"><option value="true">Sí</option><option value="false">No</option></select>
+      </div>
+      <div>
+        <label>Bloquear VPN</label>
+        <select id="blockVpn"><option value="false">No</option><option value="true">Sí</option></select>
+      </div>
+    </div>
+    <label>Installers permitidos (uno por línea)</label>
+    <textarea id="allowInstallers" placeholder="com.android.vending"></textarea>
+    <label>Países permitidos (ISO-2, uno por línea, vacío = todos)</label>
+    <textarea id="allowCountries" placeholder="CO&#10;MX&#10;AR"></textarea>
+
+    <h2>Ads ▸ General</h2>
+    <div class="row">
+      <div>
+        <label>Ads habilitados</label>
+        <select id="ads_enabled"><option value="true">Sí</option><option value="false">No</option></select>
+      </div>
+      <div>
+        <label>Proveedor</label>
+        <input id="ads_provider" type="text" placeholder="admob" />
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Modo prueba</label>
+        <select id="ads_test"><option value="false">No</option><option value="true">Sí</option></select>
+      </div>
+      <div>
+        <label>Minutos por rewarded</label>
+        <input id="rewardMinutes" type="number" value="120" />
+      </div>
+    </div>
+
+    <h2>Banner</h2>
+    <div class="row">
+      <div><label>Habilitado</label><select id="bn_enabled"><option value="true">Sí</option><option value="false">No</option></select></div>
+      <div><label>Unit ID</label><input id="bn_unit" type="text" placeholder="ca-app-pub-.../..."></div>
+    </div>
+    <div class="row">
+      <div><label>Refresh (seg)</label><input id="bn_refresh" type="number" value="30"></div>
+      <div><label>Posiciones (coma)</label><input id="bn_pos" type="text" placeholder="home,status"></div>
+    </div>
+
+    <h2>App Open</h2>
+    <div class="row">
+      <div><label>Habilitado</label><select id="ao_enabled"><option value="true">Sí</option><option value="false">No</option></select></div>
+      <div><label>Unit ID</label><input id="ao_unit" type="text"></div>
+    </div>
+    <div class="row">
+      <div><label>Preload</label><select id="ao_preload"><option value="true">Sí</option><option value="false">No</option></select></div>
+      <div><label>Show on (coma)</label><input id="ao_show" type="text" placeholder="coldStart,resume"></div>
+    </div>
+    <div class="row">
+      <div><label>Min interval (seg)</label><input id="ao_min" type="number" value="180"></div>
+      <div></div>
+    </div>
+
+    <h2>Interstitial</h2>
+    <div class="row">
+      <div><label>Habilitado</label><select id="is_enabled"><option value="true">Sí</option><option value="false">No</option></select></div>
+      <div><label>Unit ID</label><input id="is_unit" type="text"></div>
+    </div>
+    <div class="row">
+      <div><label>Mostrar cada N acciones</label><input id="is_every" type="number" value="2"></div>
+      <div><label>Min interval (seg)</label><input id="is_min" type="number" value="90"></div>
+    </div>
+    <div class="row">
+      <div><label>Cap por hora</label><input id="is_cap" type="number" value="4"></div>
+      <div></div>
+    </div>
+
+    <h2>Rewarded</h2>
+    <div class="row">
+      <div><label>Habilitado</label><select id="rw_enabled"><option value="true">Sí</option><option value="false">No</option></select></div>
+      <div><label>Rotación</label><select id="rw_rotate"><option value="round_robin">round_robin</option><option value="weighted">weighted</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>Unit IDs (uno por línea)</label><textarea id="rw_units" placeholder="id1&#10;id2&#10;id3&#10;id4&#10;id5"></textarea></div>
+      <div>
+        <label>Min interval (seg)</label><input id="rw_min" type="number" value="45" />
+        <label>Cap diario</label><input id="rw_cap" type="number" value="20" />
+      </div>
+    </div>
+
+    <h2>Enlaces (externos / promos)</h2>
+    <div id="adList" class="list"></div>
+    <div class="flex">
+      <input id="adName" type="text" placeholder="nombre" />
+      <input id="adUrl" type="text" placeholder="https://tulink" />
+      <button id="addAd">Añadir enlace</button>
+    </div>
+
+    <div class="flex" style="margin-top:1rem">
+      <button id="save">Guardar</button>
+    </div>
+  </div>
+
   <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+    // TU firebaseConfig (el tuyo real)
     const firebaseConfig = {
-      apiKey: "TU_API_KEY",
-      authDomain: "TU_PROYECTO.firebaseapp.com",
-      projectId: "TU_PROYECTO",
-      storageBucket: "TU_PROYECTO.appspot.com",
-      messagingSenderId: "0000000000",
-      appId: "1:0000000000:web:XXXXXXXXXXXX"
+      apiKey: "AIzaSyBdV3vmyeDWv1rImwxHTTFm4uwczdKlmL0",
+      authDomain: "http-conexion.firebaseapp.com",
+      databaseURL: "https://http-conexion-default-rtdb.firebaseio.com",
+      projectId: "http-conexion",
+      storageBucket: "http-conexion.firebasestorage.app",
+      messagingSenderId: "149721662763",
+      appId: "1:149721662763:web:e6055ec5eef1f73216b16e"
     };
 
     const ALLOW = ["elcris1823@gmail.com"];
-
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const $ = (id)=>document.getElementById(id);
+    const $ = id => document.getElementById(id);
     const guard = $("guard");
     const who = $("who");
+    const statusEl = $("status");
 
     $("loginBtn").onclick = async () => { await signInWithPopup(auth, new GoogleAuthProvider()); };
-    $("logoutBtn").onclick = ()=>signOut(auth);
+    $("logoutBtn").onclick = () => signOut(auth);
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) { guard.classList.add("hidden"); $("logoutBtn").classList.add("hidden"); who.classList.add("hidden"); $("loginBtn").classList.remove("hidden"); return; }
-      $("loginBtn").classList.add("hidden"); $("logoutBtn").classList.remove("hidden");
-      who.textContent = user.email; who.classList.remove("hidden");
-      if (!ALLOW.includes(user.email)) { who.textContent += " (sin permisos)"; who.classList.add("bad"); guard.classList.add("hidden"); return; }
-      who.classList.remove("bad"); guard.classList.remove("hidden"); await loadConfig();
+      if (!user) {
+        guard.classList.add("hidden");
+        $("logoutBtn").classList.add("hidden");
+        who.classList.add("hidden");
+        $("loginBtn").classList.remove("hidden");
+        return;
+      }
+      $("loginBtn").classList.add("hidden");
+      $("logoutBtn").classList.remove("hidden");
+      who.textContent = user.email;
+      who.classList.remove("hidden");
+      if (!ALLOW.includes(user.email)) {
+        who.textContent += " (sin permisos)";
+        who.classList.add("bad");
+        guard.classList.add("hidden");
+        return;
+      }
+      who.classList.remove("bad");
+      guard.classList.remove("hidden");
+      await load();
     });
 
-    async function loadConfig(){
+    // Helpers
+    const toCSV = (arr)=> (arr||[]).join(",");
+    const fromCSV = (s)=> (s||"").split(/\s*,\s*/).map(x=>x.trim()).filter(Boolean);
+    const fromLines = (s)=> (s||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+
+    let links = [];
+
+    async function load(){
       const ref = doc(db, "config", "global");
       const snap = await getDoc(ref);
-      const data = snap.exists() ? snap.data() : {};
-      $("minVersion").value = data.minVersion ?? "";
-      $("latestVersion").value = data.latestVersion ?? "";
-      $("encKey").value = data.encKey ?? "";
-      $("encKeyVersion").value = data.encKeyVersion ?? 1;
-      $("enabled").value = String(data.enabled ?? true);
-      renderAds(data.ads?.links ?? []);
+      const d = snap.exists() ? snap.data() : {};
+
+      // General
+      $("enabled").value      = String(d.enabled ?? true);
+      $("updateUrl").value    = d.updateUrl ?? "";
+      $("minVersion").value   = d.minVersion ?? "";
+      $("latestVersion").value= d.latestVersion ?? "";
+
+      // Security
+      const sec = d.security || {};
+      const crypto = sec.crypto || {};
+      $("crypto_alg").value       = crypto.alg ?? "AES-256-GCM";
+      $("encKey").value           = crypto.key ?? (d.encKey ?? "");
+      $("encKeyVersion").value    = crypto.keyVersion ?? (d.encKeyVersion ?? 1);
+      const kdf = crypto.kdf || {};
+      $("kdf_type").value         = kdf.type ?? "none";
+      $("kdf_iterations").value   = kdf.iterations ?? 100000;
+      $("kdf_salt").value         = kdf.salt ?? "";
+      $("iv_bytes").value         = crypto.ivBytes ?? 12;
+
+      $("appCheckRequired").value = String(sec.appCheckRequired ?? true);
+      $("requireSignature").value = String(sec.requireSignature ?? false);
+      $("sigSha256").value        = sec.sigSha256 ?? (d.sigSha256 ?? "");
+
+      const dev = sec.device || {};
+      $("blockRoot").value  = String(dev.blockRoot ?? true);
+      $("blockEmu").value   = String(dev.blockEmulator ?? true);
+      $("blockDebug").value = String(dev.blockDebugger ?? true);
+      $("blockVpn").value   = String(dev.blockVpn ?? false);
+
+      $("allowInstallers").value = (sec.installerAllowlist ?? ["com.android.vending"]).join("\n");
+      $("allowCountries").value  = (sec.countryAllowlist ?? []).join("\n");
+
+      // Ads
+      const a = d.ads || {}; const t = a.types || {};
+      $("ads_enabled").value  = String(a.enabled ?? true);
+      $("ads_provider").value = a.provider ?? "admob";
+      $("ads_test").value     = String(a.testMode ?? false);
+      $("rewardMinutes").value= Number(a.rewardMinutes ?? 120);
+
+      const bn = t.banner || {};
+      $("bn_enabled").value = String(bn.enabled ?? true);
+      $("bn_unit").value    = bn.unitId ?? "";
+      $("bn_refresh").value = Number(bn.refreshSec ?? 30);
+      $("bn_pos").value     = toCSV(bn.positions || []);
+
+      const ao = t.appOpen || {};
+      $("ao_enabled").value = String(ao.enabled ?? true);
+      $("ao_unit").value    = ao.unitId ?? "";
+      $("ao_preload").value = String(ao.preload ?? true);
+      $("ao_show").value    = toCSV(ao.showOn || ["coldStart","resume"]);
+      $("ao_min").value     = Number(ao.minIntervalSec ?? 180);
+
+      const ins = t.interstitial || {};
+      $("is_enabled").value = String(ins.enabled ?? true);
+      $("is_unit").value    = ins.unitId ?? "";
+      $("is_every").value   = Number(ins.showEvery ?? 2);
+      $("is_min").value     = Number(ins.minIntervalSec ?? 90);
+      $("is_cap").value     = Number(ins.capPerHour ?? 4);
+
+      const rw = t.rewarded || {};
+      $("rw_enabled").value = String(rw.enabled ?? true);
+      $("rw_rotate").value  = rw.rotate ?? "round_robin";
+      $("rw_units").value   = (rw.unitIds || []).join("\n");
+      $("rw_min").value     = Number(rw.minIntervalSec ?? 45);
+      $("rw_cap").value     = Number(rw.capDaily ?? 20);
+
+      links = (a.links || []).map(x => ({ name: x.name || "", url: x.url || "" }));
+      renderLinks();
     }
 
-    function renderAds(links){
-      const host = $("adList");
+    function renderLinks(){
+      const host = document.getElementById("adList");
       host.innerHTML = "";
       links.forEach((l,idx)=>{
         const row = document.createElement("div");
-        row.className="flex";
+        row.className = "flex";
         row.innerHTML = `
           <span class="tag">#${idx+1}</span>
-          <input type="text" value="${l.name ?? ""}" data-idx="${idx}" data-k="name">
-          <input type="text" value="${l.url ?? ""}" data-idx="${idx}" data-k="url">
+          <input type="text" value="${l.name}" data-idx="${idx}" data-k="name" />
+          <input type="text" value="${l.url}"  data-idx="${idx}" data-k="url" />
           <button data-idx="${idx}" data-k="del">Eliminar</button>
         `;
         host.appendChild(row);
@@ -143,30 +373,105 @@
       host.onclick = (e)=>{
         if (e.target.dataset?.k === "del"){
           links.splice(Number(e.target.dataset.idx),1);
-          renderAds(links);
+          renderLinks();
         }
       };
       host.oninput = (e)=>{
-        const idx = Number(e.target.dataset.idx);
-        const k = e.target.dataset.k;
-        links[idx][k] = e.target.value;
+        const i = Number(e.target.dataset.idx);
+        links[i][e.target.dataset.k] = e.target.value;
       };
-      $("addAd").onclick = ()=>{ links.push({name:"nuevo", url:"https://"}); renderAds(links); };
-      $("save").onclick = async ()=>{
-        const ref = doc(db, "config", "global");
-        await setDoc(ref, {
-          minVersion: $("minVersion").value.trim(),
-          latestVersion: $("latestVersion").value.trim(),
-          encKey: $("encKey").value.trim(),
-          encKeyVersion: Number($("encKeyVersion").value || 1),
-          enabled: $("enabled").value === "true",
-          ads: { links },
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-        $("status").textContent = "Guardado ✔";
-        setTimeout(()=>$("status").textContent="", 2000);
+      document.getElementById("addAd").onclick = ()=>{
+        links.push({name:"nuevo", url:"https://"});
+        renderLinks();
       };
     }
+
+    document.getElementById("save").onclick = async ()=>{
+      statusEl.textContent = "Guardando…";
+      const ref = doc(db, "config", "global");
+
+      const sec = {
+        crypto: {
+          alg: document.getElementById("crypto_alg").value,
+          key: document.getElementById("encKey").value.trim(),
+          keyVersion: Number(document.getElementById("encKeyVersion").value || 1),
+          kdf: {
+            type: document.getElementById("kdf_type").value,
+            iterations: Number(document.getElementById("kdf_iterations").value || 0),
+            salt: document.getElementById("kdf_salt").value.trim()
+          },
+          ivBytes: Number(document.getElementById("iv_bytes").value || 12)
+        },
+        appCheckRequired: document.getElementById("appCheckRequired").value === "true",
+        requireSignature: document.getElementById("requireSignature").value === "true",
+        sigSha256: document.getElementById("sigSha256").value.trim(),
+        installerAllowlist: fromLines(document.getElementById("allowInstallers").value),
+        countryAllowlist: fromLines(document.getElementById("allowCountries").value),
+        device: {
+          blockRoot:  document.getElementById("blockRoot").value === "true",
+          blockEmulator: document.getElementById("blockEmu").value === "true",
+          blockDebugger: document.getElementById("blockDebug").value === "true",
+          blockVpn: document.getElementById("blockVpn").value === "true"
+        }
+      };
+
+      const payload = {
+        enabled: document.getElementById("enabled").value === "true",
+        updateUrl: document.getElementById("updateUrl").value.trim(),
+        minVersion: document.getElementById("minVersion").value.trim(),
+        latestVersion: document.getElementById("latestVersion").value.trim(),
+        // compat con apps antiguas
+        encKey: document.getElementById("encKey").value.trim(),
+        encKeyVersion: Number(document.getElementById("encKeyVersion").value || 1),
+        sigSha256: document.getElementById("sigSha256").value.trim(),
+        security: sec,
+        ads: {
+          enabled: document.getElementById("ads_enabled").value === "true",
+          provider: document.getElementById("ads_provider").value.trim() || "admob",
+          testMode: document.getElementById("ads_test").value === "true",
+          rewardMinutes: Number(document.getElementById("rewardMinutes").value || 120),
+          links,
+          types: {
+            banner: {
+              enabled: document.getElementById("bn_enabled").value === "true",
+              unitId: document.getElementById("bn_unit").value.trim(),
+              refreshSec: Number(document.getElementById("bn_refresh").value || 30),
+              positions: fromCSV(document.getElementById("bn_pos").value)
+            },
+            appOpen: {
+              enabled: document.getElementById("ao_enabled").value === "true",
+              unitId: document.getElementById("ao_unit").value.trim(),
+              preload: document.getElementById("ao_preload").value === "true",
+              showOn: fromCSV(document.getElementById("ao_show").value),
+              minIntervalSec: Number(document.getElementById("ao_min").value || 180)
+            },
+            interstitial: {
+              enabled: document.getElementById("is_enabled").value === "true",
+              unitId: document.getElementById("is_unit").value.trim(),
+              showEvery: Number(document.getElementById("is_every").value || 2),
+              minIntervalSec: Number(document.getElementById("is_min").value || 90),
+              capPerHour: Number(document.getElementById("is_cap").value || 4)
+            },
+            rewarded: {
+              enabled: document.getElementById("rw_enabled").value === "true",
+              unitIds: fromLines(document.getElementById("rw_units").value),
+              rotate: document.getElementById("rw_rotate").value,
+              minIntervalSec: Number(document.getElementById("rw_min").value || 45),
+              capDaily: Number(document.getElementById("rw_cap").value || 20)
+            }
+          }
+        },
+        updatedAt: serverTimestamp()
+      };
+
+      try {
+        await setDoc(ref, payload, { merge: true });
+        statusEl.textContent = "Guardado ✔";
+        setTimeout(()=> statusEl.textContent = "", 2200);
+      } catch (e) {
+        statusEl.textContent = "Error al guardar: " + (e?.message || e);
+      }
+    };
   </script>
 </body>
 </html>
