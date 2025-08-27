@@ -81,80 +81,102 @@
   </button>
 </div>
 
+
           <p id="msg" class="err" aria-live="polite"></p>
         </form>
       </div>
     </div>
   </section>
 
-  <script type="module">
-    import {
-      requireAnon, loginWithEmail, auth, ALLOW,
-      upsertUserProfile, rememberEmail, getSavedEmail
-    } from "../js/auth.js";
-    import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+ <script type="module">
+  import {
+    requireAnon, loginWithEmail, loginWithGooglePopup,
+    auth, ALLOW, upsertUserProfile, rememberEmail, getSavedEmail
+  } from "../js/auth.js";
+  import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
-    // Si ya está logueado y permitido → admin
-    await requireAnon("/view/admin.html");
+  // Si ya está logueado y permitido → admin
+  await requireAnon("/view/admin.html");
 
-    const $ = (id) => document.getElementById(id);
-    const show = (t, ok=false) => {
-      const el = $("msg");
-      if (!t){ el.style.display="none"; el.textContent=""; return; }
-      el.textContent = t; el.style.display = "block";
-      el.style.background = ok ? "#0f2416" : "#240d10";
-      el.style.borderColor = ok ? "#1f3b24" : "#5c1d25";
-      el.style.color = ok ? "#bfffd2" : "#ffb9c1";
-    };
+  const $ = (id) => document.getElementById(id);
+  const show = (t, ok=false) => {
+    const el = $("msg");
+    if (!t){ el.style.display="none"; el.textContent=""; return; }
+    el.textContent = t; el.style.display = "block";
+    el.style.background = ok ? "#0f2416" : "#240d10";
+    el.style.borderColor = ok ? "#1f3b24" : "#5c1d25";
+    el.style.color = ok ? "#bfffd2" : "#ffb9c1";
+  };
 
-    // Autocompletar email guardado
-    const saved = getSavedEmail();
-    if (saved) $("email").value = saved;
+  // Autocompletar email guardado
+  const saved = getSavedEmail();
+  if (saved) $("email").value = saved;
 
-    $("loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault(); show("");
-      const email = $("email").value.trim();
-      const pass  = $("pass").value;
-      if (!email || !pass){ show("Completa email y contraseña."); return; }
-
-      try {
-        const cred = await loginWithEmail(email, pass);
-
-        if (!ALLOW.includes(cred.user.email || "")) {
-          show("Usuario no autorizado.");
-          return;
-        }
-
-        // Guardar email (recordarme) y actualizar Firestore
-        rememberEmail(email);
-        await upsertUserProfile(cred.user);
-
-        // Ir al panel
-        location.replace("/view/admin.html");
-      } catch (err) {
-        const map = {
-          "auth/invalid-credential":"Email o contraseña incorrectos.",
-          "auth/wrong-password":"Contraseña incorrecta.",
-          "auth/user-not-found":"Usuario no encontrado.",
-          "auth/too-many-requests":"Demasiados intentos. Intenta más tarde.",
-          "auth/operation-not-allowed":"Habilita Email/Password en Authentication → Método de acceso."
-        };
+  // Email/Password
+  $("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault(); show("");
+    const email = $("email").value.trim();
+    const pass  = $("pass").value;
+    if (!email || !pass){ show("Completa email y contraseña."); return; }
+    try {
+      const cred = await loginWithEmail(email, pass);
+      if (!ALLOW.includes(cred.user.email || "")) {
+        show("Usuario no autorizado."); return;
+      }
+      rememberEmail(email);
+      await upsertUserProfile(cred.user);
+      location.replace("/view/admin.html");
+    } catch (err) {
+      const map = {
+        "auth/invalid-credential":"Email o contraseña incorrectos.",
+        "auth/wrong-password":"Contraseña incorrecta.",
+        "auth/user-not-found":"Usuario no encontrado.",
+        "auth/too-many-requests":"Demasiados intentos. Intenta más tarde.",
+        "auth/operation-not-allowed":"Habilita Email/Password en Authentication → Método de acceso."
+      };
+      // Sugerir Google si el mail ya existe con Google
+      if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
+        show((map[err.code] || "Error") + " — Si tu correo está con Google, usa “Acceder con Google”.");
+      } else {
         show(map[err.code] || (err.message || "No se pudo iniciar sesión."));
       }
-    });
+    }
+  });
 
-    $("forgot").addEventListener("click", async (e) => {
-      e.preventDefault(); show("");
-      const email = $("email").value.trim();
-      if (!email){ show("Escribe tu email para enviarte el enlace."); return; }
-      try {
-        await sendPasswordResetEmail(auth, email);
-        show("Te enviamos un enlace para restablecer la contraseña.", true);
-      } catch (err) {
-        show("No se pudo enviar el correo: " + (err.message || err));
+  // Google
+  $("btnGoogle").addEventListener("click", async () => {
+    show("");
+    try {
+      const cred = await loginWithGooglePopup();
+      if (!ALLOW.includes(cred.user.email || "")) {
+        show("Usuario no autorizado."); return;
       }
-    });
-  </script>
-</body>
+      rememberEmail(cred.user.email || "");
+      await upsertUserProfile(cred.user);
+      location.replace("/view/admin.html");
+    } catch (err) {
+      const map = {
+        "auth/popup-closed-by-user":"Ventana cerrada.",
+        "auth/cancelled-popup-request":"Se canceló la ventana.",
+        "auth/operation-not-allowed":"Habilita Google en Authentication → Método de acceso."
+      };
+      show(map[err.code] || (err.message || "No se pudo iniciar con Google."));
+    }
+  });
 
+  // Olvidé mi contraseña (solo si el usuario tiene proveedor password)
+  $("forgot").addEventListener("click", async (e) => {
+    e.preventDefault(); show("");
+    const email = $("email").value.trim();
+    if (!email){ show("Escribe tu email para enviarte el enlace."); return; }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      show("Te enviamos un enlace para restablecer la contraseña.", true);
+    } catch (err) {
+      show("No se pudo enviar el correo: " + (err.message || err));
+    }
+  });
+</script>
+
+</body>
 </html>
