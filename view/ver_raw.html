@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ver JSON (crudo)</title>
+  <style>
+    :root{
+      --bg:#0b0c0b; --border:#1b2d1b; --text:#e7ffe7;
+    }
+    html,body{height:100%;margin:0}
+    body{background:var(--bg); color:var(--text)}
+    /* CLASE PEDIDA: sólo muestra contenido crudo */
+    .ver{
+      background:#0d0d0d; border:1px solid var(--border); border-radius:0;
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color:var(--text); padding:12px; white-space:pre-wrap; word-break:break-word;
+      height:100vh; overflow:auto; box-sizing:border-box; margin:0;
+    }
+  </style>
+</head>
+<body>
+  <pre id="out" class="ver">Cargando…</pre>
+
+  <script>
+  (async () => {
+    const out = document.getElementById('out');
+    const url = new URL(location.href).searchParams.get('url');
+    if (!url){ out.textContent = 'Falta el parámetro ?url='; return; }
+
+    try {
+      const res = await fetch(url, { mode: 'cors' });
+      if (!res.ok || !res.body){ out.textContent = 'No se pudo leer el archivo.'; return; }
+
+      // Stream → TextDecoder, para tamaños grandes y caracteres arbitrarios (UTF-8)
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8', { fatal:false });
+      let first = true, chunk;
+      while ((chunk = await reader.read()) && !chunk.done) {
+        const text = decoder.decode(chunk.value, { stream:true });
+        if (first){ out.textContent = text; first = false; }
+        else out.textContent += text;
+      }
+      // flush final
+      out.textContent += decoder.decode();
+
+      // opcional: si está vacío, aún así mostramos vacío (sin adornos)
+    } catch (e) {
+      out.textContent = 'Error cargando: ' + (e && e.message ? e.message : e);
+    }
+  })();
+  </script>
+</body>
+</html>

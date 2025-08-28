@@ -1,271 +1,280 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <title>CrisDEV • Panel Administrativo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="../asset/img/web.png" />
-  <!-- Tu fondo/tema -->
   <link rel="stylesheet" href="../admin.css" />
+
+  <!-- (Opcional) terminal web para VPS (fase 2) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.5/dist/socket.io.min.js"></script>
 </head>
 <body>
-
-  <!-- APP -->
   <div class="app">
-    <!-- ===== SIDEBAR ===== -->
+    <!-- ===== Sidebar ===== -->
     <aside class="sidebar">
       <div class="brand">
-        <img src="../asset/img/web.png" alt="Logo">
+        <img src="../asset/img/web.png" alt="logo" />
         <h1>CrisDEV • Panel</h1>
       </div>
+
+      <button id="btnToggleNav" class="btn">☰ Menú</button>
       <div class="muted">Beta v2.0</div>
 
-      <div class="nav-section">
-        <div class="nav-title">Principal</div>
-        <ul class="nav">
-          <li><a href="#vps" data-view="vps" class="active"><span class="ico">🛠️</span><span class="txt">Conexiones VPS</span></a></li>
-          <li><a href="#repos" data-view="repos"><span class="ico">📁</span><span class="txt">Repositorios JSON</span></a></li>
-          <li><a href="#users" data-view="users"><span class="ico">👥</span><span class="txt">Usuarios</span></a></li>
-          <li><a href="#push" data-view="push"><span class="ico">🔔</span><span class="txt">Notificaciones</span></a></li>
-          <li><a href="#premium" data-view="premium"><span class="ico">💎</span><span class="txt">Premium</span></a></li>
-        </ul>
-      </div>
+      <div class="muted" style="margin:10px 0 6px">Principal</div>
+      <ul class="nav">
+        <li><a href="#vps" data-view="vps" class="active"><span class="ico">🛠️</span><span class="txt">Conexiones VPS</span></a></li>
+        <li><a href="#repos" data-view="repos"><span class="ico">📦</span><span class="txt">Repositorios JSON</span></a></li>
+        <li><a href="#users" data-view="users"><span class="ico">👤</span><span class="txt">Usuarios</span></a></li>
+        <li><a href="#push" data-view="push"><span class="ico">🔔</span><span class="txt">Notificaciones</span></a></li>
+        <li><a href="#premium" data-view="premium"><span class="ico">💎</span><span class="txt">Premium</span></a></li>
+      </ul>
 
-      <div class="nav-section">
-        <div class="nav-title">Configuración</div>
-        <ul class="nav">
-          <li><a href="#app" data-view="app"><span class="ico">⚙️</span><span class="txt">App Config</span></a></li>
-          <li><a href="#firebase" data-view="firebase"><span class="ico">🔥</span><span class="txt">Firebase</span></a></li>
-        </ul>
-      </div>
+      <div class="muted" style="margin:10px 0 6px">Configuración</div>
+      <ul class="nav">
+        <li><a href="#app" data-view="app"><span class="ico">⚙️</span><span class="txt">App Config</span></a></li>
+        <li><a href="#firebase" data-view="firebase"><span class="ico">🔥</span><span class="txt">Firebase</span></a></li>
+        <li><a href="#auth" data-view="auth"><span class="ico">🔒</span><span class="txt">Admin Auth</span></a></li>
+      </ul>
 
-      <div class="nav-section">
-        <div class="nav-title">Sesión</div>
-        <ul class="nav">
-          <li><a href="#auth" data-view="auth"><span class="ico">🔐</span><span class="txt">Admin Auth</span></a></li>
-        </ul>
-      </div>
+      <div class="muted" style="margin:10px 0 6px">Sesión</div>
+      <ul class="nav">
+        <li><a href="/view/logout.html"><span class="ico">🚪</span><span class="txt">Cerrar sesión</span></a></li>
+      </ul>
+
+      <div id="authInfo" class="muted" style="margin-top:12px"></div>
     </aside>
 
-    <!-- ===== MAIN ===== -->
+    <!-- ===== Main ===== -->
     <main class="main">
-      <div class="header">
-        <div class="title"><h2 id="viewTitle">Conexiones VPS</h2></div>
-        <div class="userbar">
-          <span id="who"></span>
-          <a class="btn" href="/view/logout.html">Cerrar sesión</a>
-        </div>
-      </div>
+      <div class="header"><h2 id="viewTitle">Conexiones VPS</h2></div>
 
-      <!-- ====== VISTAS ====== -->
-      <!-- VPS -->
+      <!-- ===== VPS ===== -->
       <section id="view-vps" class="view active">
-        <div class="row" style="margin-bottom:10px">
-          <button id="btnNewVps" class="btn">+ Nueva VPS</button>
-          <span class="note">Conectaremos la terminal en una fase 2 (requiere backend con SSH proxy).</span>
-        </div>
         <div class="card">
-          <table class="table" id="tblVps">
-            <thead><tr>
-              <th>Nombre</th><th>Host</th><th>Puerto</th><th>Usuario</th><th>Notas</th><th></th>
-            </tr></thead>
-            <tbody><!-- rows dinámicas --></tbody>
+          <div class="row">
+            <button id="btnNewVps" class="btn btn-primary">+ Nueva VPS</button>
+          </div>
+          <table id="tblVps" class="table" style="margin-top:10px">
+            <thead>
+              <tr><th>Nombre</th><th>Host</th><th>Puerto</th><th>Usuario</th><th>Notas</th><th>Acciones</th></tr>
+            </thead>
+            <tbody></tbody>
           </table>
+        </div>
+
+        <!-- Terminal (fase 2) -->
+        <div id="termCard" class="card" style="display:none; margin-top:12px">
+          <div class="row" style="justify-content:space-between;align-items:center">
+            <strong id="termTitle">Terminal</strong>
+            <button id="btnTermClose" class="btn">Cerrar</button>
+          </div>
+          <div id="xterm" style="height:420px; background:#000; margin-top:10px"></div>
         </div>
       </section>
 
-      <!-- Repositorios JSON -->
+      <!-- ===== Repositorios JSON ===== -->
       <section id="view-repos" class="view">
-      <div class="card grid">
-        <div class="grid-2">
-          <div class="field">
-            <label>App</label>
-            <div class="row">
-              <select id="appSelect"></select>
-              <input id="appNameNew" type="text" placeholder="Nueva app…" />
-              <button id="btnCreateApp" class="btn btn-primary">Crear app</button>
+        <div class="card grid">
+          <div class="grid-2">
+            <div class="field">
+              <label>App</label>
+              <div class="row">
+                <select id="appSelect"></select>
+                <input id="appNameNew" type="text" placeholder="Nueva app…" />
+                <button id="btnCreateApp" class="btn btn-primary">Crear app</button>
+              </div>
+              <small class="help">Puedes administrar varios repos por app.</small>
             </div>
-            <small class="help">Puedes administrar varios repos por app.</small>
-          </div>
-          <div class="field">
-            <label>Repositorio</label>
-            <div class="row">
-              <input id="repoName" type="text" placeholder="Nombre del repositorio" />
-              <input id="repoFile" type="file" accept="application/json,.json" />
-              <button id="btnUploadRepo" class="btn btn-info">Subir / Actualizar</button>
+
+            <div class="field">
+              <label>Repositorio</label>
+              <div class="row">
+                <input id="repoName" type="text" placeholder="Nombre del repositorio" />
+                <input id="repoFile" type="file" accept="application/json,.json" />
+                <button id="btnUploadRepo" class="btn btn-info">Subir / Actualizar</button>
+              </div>
+              <small class="help">Se guarda el .json completo en Storage y la metadata en Firestore.</small>
             </div>
-            <small class="help">Se guarda el .json completo en Storage y la metadata en Firestore.</small>
           </div>
         </div>
-      </div>
 
-      <div class="card" style="margin-top:12px">
-        <table class="table" id="tblRepos">
-          <thead>
-            <tr>
-              <th>Nombre</th><th>Tamaño</th><th>Actualizado</th><th>URL</th><th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody><!-- filas dinámicas --></tbody>
-        </table>
-      </div>
-
-      <div class="card" id="repoViewer" style="margin-top:12px; display:none">
-        <div class="row" style="justify-content:space-between">
-          <strong>Vista del JSON (sin filtros)</strong>
-          <button id="btnCloseViewer" class="btn">Cerrar</button>
+        <div class="card" style="margin-top:12px">
+          <table class="table" id="tblRepos">
+            <thead>
+              <tr><th>Nombre</th><th>Tamaño</th><th>Actualizado</th><th>URL</th><th>Acciones</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </div>
-        <pre id="rawView" class="raw-view"></pre>
-      </div>
-    </section>
 
+        <div class="card" id="repoViewer" style="margin-top:12px; display:none">
+          <div class="row" style="justify-content:space-between; align-items:center">
+            <strong>Vista del JSON</strong>
+            <label class="row" style="gap:6px; align-items:center">
+              <input id="chkJsonPretty" type="checkbox"><span>Formatear</span>
+            </label>
+            <button id="btnCloseViewer" class="btn">Cerrar</button>
+          </div>
+          <pre id="rawView" class="ver"></pre>
+        </div>
+      </section>
 
-      <!-- Usuarios -->
+      <!-- ===== Usuarios ===== -->
       <section id="view-users" class="view">
         <div class="card">
-          <div class="row" style="justify-content:space-between">
-            <div class="row">
-              <button id="btnReloadUsers" class="btn">Actualizar lista</button>
-            </div>
-            <span class="note">Administra tiempo, bloqueos y acceso.</span>
-          </div>
-          <hr class="hr" />
-          <table class="table" id="tblUsers">
-            <thead><tr>
-              <th>Email</th><th>Último acceso</th><th>Expira</th><th>Estado</th><th>Minutos</th><th>Acciones</th>
-            </tr></thead>
-            <tbody><!-- rows dinámicas --></tbody>
+          <div class="row"><button id="btnReloadUsers" class="btn">Actualizar lista</button></div>
+          <table id="tblUsers" class="table" style="margin-top:10px">
+            <thead>
+              <tr><th>Email</th><th>Último acceso</th><th>Expira</th><th>Estado</th><th>Minutos</th><th>Acciones</th></tr>
+            </thead>
+            <tbody></tbody>
           </table>
         </div>
       </section>
 
-      <!-- Notificaciones -->
+      <!-- ===== Notificaciones (FCM) ===== -->
       <section id="view-push" class="view">
-      <div class="card grid">
-        <div class="grid-3">
-          <div class="field">
-            <label>Destino</label>
-            <select id="fcmTarget">
-              <option value="topic">Tópico</option>
-              <option value="token">Token</option>
-            </select>
+        <div class="card grid">
+          <div class="grid-3">
+            <div class="field">
+              <label>Destino</label>
+              <select id="fcmTarget">
+                <option value="topic">Tópico</option>
+                <option value="token">Token</option>
+              </select>
+            </div>
+            <div class="field">
+              <label id="fcmTargetLabel">Tópico</label>
+              <input id="fcmTargetValue" type="text" placeholder="p. ej. all o app-com.paquete" />
+            </div>
+            <div class="field">
+              <label>Prioridad</label>
+              <select id="fcmPriority">
+                <option value="normal">normal</option>
+                <option value="high">alta</option>
+              </select>
+            </div>
           </div>
-          <div class="field">
-            <label id="fcmTargetLabel">Tópico</label>
-            <input id="fcmTargetValue" type="text" placeholder="p. ej. all o app-com.paquete" />
+
+          <div class="grid-2">
+            <div class="field"><label>Título</label><input id="fcmTitle" type="text" placeholder="Aviso / Actualización" /></div>
+            <div class="field"><label>Texto</label><input id="fcmBody" type="text" placeholder="Mensaje…" /></div>
           </div>
-          <div class="field">
-            <label>Prioridad</label>
-            <select id="fcmPriority">
-              <option value="normal">normal</option>
-              <option value="high">alta</option>
-            </select>
+
+          <div class="grid-2">
+            <div class="field"><label>Imagen (URL)</label><input id="fcmImage" type="text" placeholder="https://tuapp.com/imagen.png" /></div>
+            <div class="field"><label>Nombre (opcional)</label><input id="fcmName" type="text" placeholder="canal/etiqueta" /></div>
+          </div>
+
+          <div class="row">
+            <button id="btnSendFCM" class="btn btn-primary">Enviar notificación</button>
+            <small class="help">Usa Cloud Messaging (HTTP v1 vía Cloud Function callable).</small>
           </div>
         </div>
+      </section>
 
-        <div class="grid-2">
-          <div class="field"><label>Título</label><input id="fcmTitle" type="text" placeholder="Aviso / Actualización" /></div>
-          <div class="field"><label>Body</label><input id="fcmBody" type="text" placeholder="Mensaje…" /></div>
-        </div>
-
-        <div class="row">
-          <button id="btnSendFCM" class="btn btn-primary">Enviar notificación</button>
-          <small class="help">Usa Cloud Messaging (HTTP v1 vía Cloud Function callable).</small>
-        </div>
-      </div>
-    </section>
-
-
-      <!-- Premium (placeholder para tus reglas de negocio) -->
+      <!-- ===== Premium ===== -->
       <section id="view-premium" class="view">
         <div class="card grid">
-          <div class="field">
-            <label>Duración predeterminada (días) para nuevas cuentas</label>
-            <input id="premDays" type="number" min="1" value="15" />
+          <div class="grid-2">
+            <div class="field">
+              <label>Duración predeterminada (días)</label>
+              <input id="premDays" type="number" value="15" />
+            </div>
           </div>
+          <div class="row"><button id="btnSavePremium" class="btn btn-primary">Guardar</button></div>
+        </div>
+      </section>
+
+      <!-- ===== App Config ===== -->
+      <section id="view-app" class="view">
+        <div class="card grid">
+          <div class="grid-2">
+            <div class="field"><label>Nombre de la app</label><input id="appName" type="text" /></div>
+            <div class="field"><label>Package name</label><input id="packageName" type="text" /></div>
+          </div>
+
+          <div class="grid-3">
+            <div class="field"><label>AdMob App Open</label><input id="adAppOpen" type="text" /></div>
+            <div class="field"><label>AdMob Banner</label><input id="adBanner" type="text" /></div>
+            <div class="field"><label>AdMob Interstitial</label><input id="adInter" type="text" /></div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field"><label>Rewarded UnitIds (coma)</label><input id="adRewarded" type="text" /></div>
+            <div class="field"><label>Test mode</label><select id="adTest"><option>false</option><option>true</option></select></div>
+          </div>
+
+          <div class="grid-3">
+            <div class="field"><label>Repositorio (link)</label><input id="repoLink" type="text" /></div>
+            <div class="field"><label>Servidor — Usuario</label><input id="srvUser" type="text" /></div>
+            <div class="field"><label>Servidor — Contraseña</label><input id="srvPass" type="text" /></div>
+          </div>
+
+          <div class="grid-3">
+            <div class="field"><label>Última versión</label><input id="latestVersion" type="text" /></div>
+            <div class="field"><label>Versión mínima</label><input id="minVersion" type="text" /></div>
+            <div class="field"><label>URL de actualización</label><input id="updateUrl" type="text" /></div>
+          </div>
+
           <div class="row">
-            <button id="btnSavePremium" class="btn">Guardar</button>
-            <span class="note">Se aplicará para altas nuevas o “reiniciar tiempo”.</span>
+            <div class="field">
+              <label>Subir APK (actualización directa)</label>
+              <input id="apkFile" type="file" accept=".apk" />
+              <small class="help">Se sube a Storage y se guarda el link en la config.</small>
+            </div>
+            <button id="btnSaveApp" class="btn btn-primary">Guardar configuración</button>
+            <span id="appMsg" class="badge" style="display:none"></span>
           </div>
         </div>
       </section>
 
-      <!-- App Config -->
-      <section id="view-app" class="view">
-      <div class="card grid">
-        <div class="grid-2">
-          <div class="field"><label>Nombre de la app</label><input id="appName" type="text" /></div>
-          <div class="field"><label>Package name</label><input id="packageName" type="text" /></div>
-        </div>
-
-        <div class="grid-3">
-          <div class="field"><label>AdMob App Open</label><input id="adAppOpen" type="text" /></div>
-          <div class="field"><label>AdMob Banner</label><input id="adBanner" type="text" /></div>
-          <div class="field"><label>AdMob Interstitial</label><input id="adInter" type="text" /></div>
-        </div>
-
-        <div class="grid-2">
-          <div class="field"><label>Rewarded UnitIds (coma)</label><input id="adRewarded" type="text" /></div>
-          <div class="field"><label>Test mode</label><select id="adTest"><option>false</option><option>true</option></select></div>
-        </div>
-
-        <div class="grid-3">
-          <div class="field"><label>Repositorio (link)</label><input id="repoLink" type="text" /></div>
-          <div class="field"><label>Servidor — Usuario</label><input id="srvUser" type="text" /></div>
-          <div class="field"><label>Servidor — Contraseña</label><input id="srvPass" type="text" /></div>
-        </div>
-
-        <div class="grid-3">
-          <div class="field"><label>Última versión</label><input id="latestVersion" type="text" /></div>
-          <div class="field"><label>Versión mínima</label><input id="minVersion" type="text" /></div>
-          <div class="field"><label>URL de actualización</label><input id="updateUrl" type="text" /></div>
-        </div>
-
-        <div class="row">
-          <div class="field">
-            <label>Subir APK (actualización directa)</label>
-            <input id="apkFile" type="file" accept=".apk" />
-            <small class="help">Se sube a Storage y se guarda el link en la config.</small>
-          </div>
-          <button id="btnSaveApp" class="btn btn-primary">Guardar configuración</button>
-          <span id="appMsg" class="badge" style="display:none"></span>
-        </div>
-      </div>
-    </section>
-
-
-      <!-- Firebase Info -->
+      <!-- ===== Firebase ===== -->
       <section id="view-firebase" class="view">
         <div class="card grid">
-          <div class="field">
-            <label>Proyecto</label>
-            <input id="fbProject" disabled />
+          <div class="grid-3">
+            <div class="field">
+              <label>ID de proyecto</label>
+              <div class="row">
+                <input id="fbProject" type="text" readonly>
+                <button id="btnCopyCfg" class="btn">Copiar config</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>Tu sesión</label>
+              <input id="fbEmail" type="text" readonly>
+            </div>
           </div>
-          <div class="field">
-            <label>Auth — email en sesión</label>
-            <input id="fbEmail" disabled />
+        </div>
+
+        <div class="card grid" style="margin-top:14px">
+          <div class="grid-3">
+            <div class="field"><label>Firestore</label><a id="lnkFs" class="btn btn-outline" target="_blank">Abrir consola</a></div>
+            <div class="field"><label>Realtime Database</label><a id="lnkRtdb" class="btn btn-outline" target="_blank">Abrir consola</a></div>
+            <div class="field"><label>Storage</label><a id="lnkSt" class="btn btn-outline" target="_blank">Abrir consola</a></div>
           </div>
-          <div class="row">
-            <span class="note">La seguridad final se hará con reglas de Firestore/Storage permitiendo solo correos autorizados.</span>
+          <div class="grid-3">
+            <div class="field"><label>Authentication</label><a id="lnkAuth" class="btn btn-outline" target="_blank">Abrir consola</a></div>
+            <div class="field"><label>Messaging</label><a id="lnkMsg" class="btn btn-outline" target="_blank">Abrir consola</a></div>
+            <div class="field"><label>Analytics</label><a id="lnkAn" class="btn btn-outline" target="_blank">Abrir consola</a></div>
           </div>
         </div>
       </section>
 
-      <!-- Admin Auth -->
+      <!-- ===== Admin Auth ===== -->
       <section id="view-auth" class="view">
-        <div class="card grid">
-          <div class="row" style="justify-content:space-between">
-            <div>
-              <div class="note">Esta sesión controla quién puede escribir en la base de datos.</div>
-              <div id="authInfo" class="badge ok">Cargando…</div>
-            </div>
-            <a class="btn" href="/view/logout.html">Cerrar sesión</a>
-          </div>
+        <div class="card">
+          <p class="muted">Solo correos permitidos pueden acceder. Esta vista puede mostrar auditorías o roles en el futuro.</p>
         </div>
       </section>
     </main>
   </div>
 
+  <!-- Firebase inicializa en /js/auth.js -->
   <script type="module" src="../js/panel.js"></script>
 </body>
 </html>

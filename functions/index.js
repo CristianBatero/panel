@@ -23,3 +23,23 @@ exports.grantTime = functions.https.onCall(async (data, context) => {
 
   return { ok: true };
 });
+
+// functions/index.js
+exports.sendPush = functions.onCall(async (req) => {
+  const { targetType, target, title, body, priority = "normal", image = "", notifName = "" } = req.data || {};
+  if(!targetType || !target || !title || !body) throw new functions.HttpsError("invalid-argument","Faltan campos.");
+
+  const message = {
+    notification: { title, body, image: image || undefined },
+    android: { priority: priority === "high" ? "HIGH" : "NORMAL" },
+    apns: { headers: { "apns-priority": priority === "high" ? "10" : "5" } },
+    // opcional (etiqueta/canal)
+    data: notifName ? { channel: notifName } : undefined
+  };
+
+  if (targetType === "token") message.token = target;
+  else message.topic = target;
+
+  const res = await admin.messaging().send(message);
+  return { ok:true, id:res };
+});
