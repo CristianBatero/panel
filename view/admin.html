@@ -54,27 +54,79 @@
 
       <!-- ===== VPS ===== -->
       <section id="view-vps" class="view active">
-        <div class="card">
-          <div class="row">
-            <button id="btnNewVps" class="btn btn-primary">+ Nueva VPS</button>
-          </div>
-          <table id="tblVps" class="table" style="margin-top:10px">
-            <thead>
-              <tr><th>Nombre</th><th>Host</th><th>Puerto</th><th>Usuario</th><th>Notas</th><th>Acciones</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+      <div class="card">
+        <div class="row">
+          <button id="btnNewVps" class="btn btn-primary">+ Nueva VPS</button>
         </div>
 
-        <!-- Terminal (fase 2) -->
-        <div id="termCard" class="card" style="display:none; margin-top:12px">
-          <div class="row" style="justify-content:space-between;align-items:center">
-            <strong id="termTitle">Terminal</strong>
-            <button id="btnTermClose" class="btn">Cerrar</button>
-          </div>
-          <div id="xterm" style="height:420px; background:#000; margin-top:10px"></div>
+        <table id="tblVps" class="table" style="margin-top:10px">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Host / IP</th>
+              <th>Puerto</th>
+              <th>Usuario</th>
+              <th>Notas</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- Editor (crear / editar) -->
+      <div class="card" id="vpsEditor" style="display:none; margin-top:12px">
+        <div class="row" style="justify-content:space-between; align-items:center">
+          <strong id="vpsEditorTitle">Nueva VPS</strong>
+          <button id="btnVpsCancel" class="btn">Cancelar</button>
         </div>
-      </section>
+
+        <div class="grid-3" style="margin-top:10px">
+          <div class="field">
+            <label>Nombre (opcional)</label>
+            <input id="vpsName" type="text" placeholder="Mi servidor" />
+          </div>
+          <div class="field">
+            <label>Host / IP</label>
+            <input id="vpsHost" type="text" placeholder="192.168.0.10 o vps.dominio.com" />
+          </div>
+          <div class="field">
+            <label>Puerto</label>
+            <input id="vpsPort" type="number" min="1" max="65535" value="22" />
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="field">
+            <label>Usuario</label>
+            <input id="vpsUser" type="text" value="root" />
+          </div>
+          <div class="field">
+            <label>Contraseña</label>
+            <input id="vpsPass" type="password" />
+          </div>
+          <div class="field">
+            <label>Notas</label>
+            <input id="vpsNotes" type="text" placeholder="Descripción corta…" />
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="btnVpsSave" class="btn btn-primary">Guardar VPS</button>
+          <span id="vpsMsg" class="badge" style="display:none"></span>
+        </div>
+      </div>
+
+      <!-- (Opcional) Terminal — fase 2 -->
+      <div id="termCard" class="card" style="display:none; margin-top:12px">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <strong id="termTitle">Terminal</strong>
+          <button id="btnTermClose" class="btn">Cerrar</button>
+        </div>
+        <div id="xterm" style="height:420px; background:#000; margin-top:10px"></div>
+      </div>
+    </section>
+
 
       <!-- ===== Repositorios JSON ===== -->
       <section id="view-repos" class="view">
@@ -111,15 +163,16 @@
           </table>
         </div>
 
-        <div class="card" id="repoViewer" style="margin-top:12px; display:none">
+        <!-- PREVIEW EN PÁGINA DEL REPO SELECCIONADO -->
+        <div class="card" id="repoPreviewCard" style="margin-top:12px">
           <div class="row" style="justify-content:space-between; align-items:center">
-            <strong>Vista del JSON</strong>
-            <label class="row" style="gap:6px; align-items:center">
-              <input id="chkJsonPretty" type="checkbox"><span>Formatear</span>
-            </label>
-            <button id="btnCloseViewer" class="btn">Cerrar</button>
+            <strong>Vista del repositorio seleccionado (crudo)</strong>
+            <div class="row">
+              <button id="btnRepoRefresh" class="btn">Recargar</button>
+              <a id="btnRepoOpenRaw" class="btn" target="_blank">Abrir ver_raw</a>
+            </div>
           </div>
-          <pre id="rawView" class="ver"></pre>
+          <pre id="repoLive" class="ver"></pre>
         </div>
       </section>
 
@@ -175,6 +228,17 @@
             <small class="help">Usa Cloud Messaging (HTTP v1 vía Cloud Function callable).</small>
           </div>
         </div>
+
+        <!-- PREVIEW ÚLTIMO ENVÍO -->
+        <div class="card" id="pushPreviewCard" style="margin-top:12px">
+          <div class="row" style="justify-content:space-between; align-items:center">
+            <strong>Último envío (payload)</strong>
+            <div class="row">
+              <button id="btnPushOpenRaw" class="btn" style="display:none" target="_blank">Abrir ver_raw</button>
+            </div>
+          </div>
+          <pre id="pushLive" class="ver"></pre>
+        </div>
       </section>
 
       <!-- ===== Premium ===== -->
@@ -186,7 +250,21 @@
               <input id="premDays" type="number" value="15" />
             </div>
           </div>
-          <div class="row"><button id="btnSavePremium" class="btn btn-primary">Guardar</button></div>
+          <div class="row">
+            <button id="btnSavePremium" class="btn btn-primary">Guardar</button>
+          </div>
+        </div>
+
+        <!-- PREVIEW EN PÁGINA DE PREMIUM -->
+        <div class="card" id="premPreviewCard" style="margin-top:12px">
+          <div class="row" style="justify-content:space-between; align-items:center">
+            <strong>Vista guardada (Premium)</strong>
+            <div class="row">
+              <button id="btnPremRefresh" class="btn">Recargar</button>
+              <a id="btnPremOpenRaw" class="btn" target="_blank">Abrir ver_raw</a>
+            </div>
+          </div>
+          <pre id="premLive" class="ver"></pre>
         </div>
       </section>
 
@@ -230,6 +308,18 @@
             <button id="btnSaveApp" class="btn btn-primary">Guardar configuración</button>
             <span id="appMsg" class="badge" style="display:none"></span>
           </div>
+        </div>
+
+        <!-- PREVIEW EN PÁGINA DE APP CONFIG -->
+        <div class="card" id="appPreviewCard" style="margin-top:12px">
+          <div class="row" style="justify-content:space-between; align-items:center">
+            <strong>Vista guardada (App Config)</strong>
+            <div class="row">
+              <button id="btnAppRefresh" class="btn">Recargar</button>
+              <a id="btnAppOpenRaw" class="btn" target="_blank">Abrir ver_raw</a>
+            </div>
+          </div>
+          <pre id="appLive" class="ver"></pre>
         </div>
       </section>
 

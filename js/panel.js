@@ -247,11 +247,48 @@ $("#tblRepos")?.addEventListener("change",async(e)=>{
 /* =========================
    VPS
    ========================= */
+// ====== VPS ======
 const vpsCol = collection(db, "vps");
+
+function showVpsMsg(txt, ok=true){
+  const el = document.getElementById("vpsMsg");
+  if (!el) return;
+  el.textContent = txt || "";
+  el.style.display = txt ? "inline-block" : "none";
+  el.classList.toggle("ok", !!ok);
+  el.classList.toggle("danger", !ok);
+}
+
+function showVpsEditor(data = {}, id = null){
+  document.getElementById("vpsEditor").style.display = "block";
+  document.getElementById("vpsEditorTitle").textContent = id ? "Editar VPS" : "Nueva VPS";
+  document.getElementById("vpsName").value  = data.name  ?? "";
+  document.getElementById("vpsHost").value  = data.host  ?? "";
+  document.getElementById("vpsPort").value  = data.port  ?? 22;
+  document.getElementById("vpsUser").value  = data.user  ?? "root";
+  document.getElementById("vpsPass").value  = data.pass  ?? "";
+  document.getElementById("vpsNotes").value = data.notes ?? "";
+  document.getElementById("vpsEditor").dataset.id = id || "";
+  showVpsMsg("");
+}
+
+function hideVpsEditor(){
+  document.getElementById("vpsEditor").style.display = "none";
+  document.getElementById("vpsEditor").dataset.id = "";
+  showVpsMsg("");
+}
+
 function renderVpsList(){
-  const tbody = document.querySelector("#tblVps tbody"); if (!tbody) return;
+  const tbody = document.querySelector("#tblVps tbody");
+  if (!tbody) return;
   onSnapshot(query(vpsCol, orderBy("name")), (snap) => {
     tbody.innerHTML = "";
+    if (snap.empty){
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="6" style="text-align:center; opacity:.7">No hay VPS registradas.</td>`;
+      tbody.appendChild(tr);
+      return;
+    }
     snap.forEach(d => {
       const v = d.data();
       const tr = document.createElement("tr");
@@ -263,25 +300,78 @@ function renderVpsList(){
         <td>${v.notes||""}</td>
         <td class="row">
           <button class="btn" data-edit="${d.id}">Editar</button>
+          <button class="btn btn-danger" data-del="${d.id}">Eliminar</button>
           <button class="btn" data-term="${d.id}" disabled title="Pronto">Terminal</button>
         </td>`;
+      tr.dataset.id = d.id;
       tbody.appendChild(tr);
     });
   }, (err)=> alert("Error cargando VPS: " + (err.message || err)));
 }
 renderVpsList();
 
-$("btnNewVps")?.addEventListener("click", async () => {
-  const name = prompt("Nombre de la VPS:"); if (!name) return;
-  const host = prompt("Host/IP:"); if (!host) return;
-  const port = Number(prompt("Puerto SSH:", "22")) || 22;
-  const user = prompt("Usuario:", "root") || "root";
-  const notes = prompt("Notas:", "") || "";
-  try{
-    await addDoc(vpsCol, { name, host, port, user, notes, createdAt: serverTimestamp(), owner: me.uid });
-    alert("VPS guardada.");
-  }catch(err){ alert("No se pudo guardar la VPS: " + (err.message || err)); }
+// Abrir editor en blanco
+document.getElementById("btnNewVps")?.addEventListener("click", () => {
+  showVpsEditor({ port:22, user:"root" }, null);
 });
+
+// Cancelar editor
+document.getElementById("btnVpsCancel")?.addEventListener("click", hideVpsEditor);
+
+// Guardar (crear/editar)
+document.getElementById("btnVpsSave")?.addEventListener("click", async () => {
+  const id   = document.getElementById("vpsEditor").dataset.id || null;
+  const name = document.getElementById("vpsName").value.trim();
+  const host = document.getElementById("vpsHost").value.trim();
+  const port = Number(document.getElementById("vpsPort").value) || 22;
+  const user = document.getElementById("vpsUser").value.trim() || "root";
+  const pass = document.getElementById("vpsPass").value; // ⚠️ guardado simple (mejor cifrar en backend en fase 2)
+  const notes= document.getElementById("vpsNotes").value.trim();
+
+  if (!host){ showVpsMsg("El host/IP es obligatorio.", false); return; }
+  if (!user){ showVpsMsg("El usuario es obligatorio.", false); return; }
+  if (!pass){ showVpsMsg("La contraseña es obligatoria.", false); return; }
+
+  const payload = {
+    name: name || host,
+    host, port, user, pass, notes,
+    updatedAt: serverTimestamp(),
+    owner: me.uid
+  };
+
+  try{
+    if (id){
+      await updateDoc(doc(db, "vps", id), payload);
+    }else{
+      payload.createdAt = serverTimestamp();
+      await addDoc(vpsCol, payload);
+    }
+    showVpsMsg("Guardado ✔", true);
+    setTimeout(hideVpsEditor, 450);
+  }catch(err){
+    showVpsMsg("Error: " + (err.message || err), false);
+  }
+});
+
+// Editar / Eliminar desde la tabla
+document.getElementById("tblVps")?.addEventListener("click", async (e) => {
+  const idEdit = e.target.dataset.edit;
+  const idDel  = e.target.dataset.del;
+
+  if (idEdit){
+    const ref = doc(db, "vps", idEdit);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return alert("VPS no encontrada.");
+    showVpsEditor(snap.data(), idEdit);
+    return;
+  }
+
+  if (idDel){
+    if (!confirm("¿Eliminar esta VPS?")) return;
+    await deleteDoc(doc(db, "vps", idDel));
+  }
+});
+
 
 /* =========================
    USUARIOS
