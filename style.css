@@ -14,6 +14,7 @@ body {
 }
 section {
   position: absolute;
+  left: 0;
   width: 100vw;
   height: 100vh;
   display: flex;
@@ -175,4 +176,61 @@ input[type="submit"]:active {
   margin-top:10px; padding:8px 12px; border-radius:8px;
   background:#240d10; border:1px solid #5c1d25; color:#ffb9c1;
   text-align:center; box-shadow:0 10px 25px rgba(0,0,0,.35);
+}
+
+/* Separador con raya y "o" */
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  margin: 20px 0 10px;
+  font-size: .9em;
+}
+
+/* Evita que el separador herede estilos del fondo */
+.divider > span{
+  display:inline;
+  width:auto; height:auto;
+  background: transparent !important;
+  position: static;
+  line-height: 1;
+}
+
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #333;
+}
+.divider span {
+  margin: 0 10px;
+  color: #777;
+}
+
+/* Botón circular Google */
+.social-login {
+  display: flex;
+  justify-content: center;
+}
+.btn-google-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .2s ease;
+}
+.btn-google-circle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+}
+.btn-google-circle svg {
+  width: 22px;
+  height: 22px;
 }

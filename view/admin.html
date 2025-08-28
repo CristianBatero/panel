@@ -1,41 +1,320 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <title>HTTP Conexión — Administración</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="icon" href="../asset/img/web.png">
-  <link rel="stylesheet" href="../style.css">
+  <meta charset="utf-8" />
+  <title>CrisDEV • Panel Administrativo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="../asset/img/web.png" />
+  <!-- Tu fondo/tema -->
+  <link rel="stylesheet" href="../style.css" />
   <style>
-    body{background:#000;color:#dff5df;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    .wrap{max-width:980px;margin:40px auto;padding:16px}
-    .card{background:#101010;border:1px solid #1e2f1e;border-radius:14px;padding:18px;box-shadow:0 18px 40px rgba(0,0,0,.3)}
-    .row{display:flex;gap:12px;align-items:center;justify-content:space-between}
-    .btn{padding:9px 14px;border-radius:10px;border:1px solid #184018;background:#072507;color:#bfffc4;cursor:pointer;text-decoration:none}
-    .btn:hover{filter:brightness(1.06)}
+    /* ===== LAYOUT DEL PANEL ===== */
+    body{min-height:100vh;background:#000;color:#dff5df; overflow:hidden;}
+    .app{
+      position:relative; z-index:10; /* queda sobre el fondo animado */
+      display:grid; grid-template-columns: 260px 1fr; gap:0; width:100vw; height:100vh;
+      backdrop-filter: none;
+    }
+    .sidebar{
+      background:#0b0b0b; border-right:1px solid #172c17; padding:14px; overflow:auto;
+    }
+    .brand{ display:flex; align-items:center; gap:.6rem; padding:6px 8px; opacity:.95 }
+    .brand img{ height:22px }
+    .brand h1{ font-size:1rem; margin:0; color:#b9ffbf; font-weight:600 }
+    .muted{ color:#8abf8f; font-size:.82rem }
+
+    .nav-section{ margin-top:16px; }
+    .nav-title{ color:#7ebf83; font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; margin:8px 10px }
+    .nav{ list-style:none; margin:0; padding:0 }
+    .nav a{
+      display:flex; align-items:center; gap:.6rem;
+      padding:10px 12px; margin:4px 0; border-radius:10px;
+      color:#dff5df; text-decoration:none; border:1px solid transparent; background:transparent;
+    }
+    .nav a:hover{ background:#0e1a0e; border-color:#1a311a }
+    .nav a.active{ background:#0c240c; border-color:#1e3f1e; color:#bfffc4 }
+    .nav .ico{ width:18px; text-align:center; opacity:.9 }
+
+    .main{ position:relative; overflow:auto; padding:18px 22px; }
+    .header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;
+    }
+    .title{ display:flex; align-items:center; gap:.6rem }
+    .title h2{ margin:0; font-weight:700 }
+    .btn{
+      padding:9px 14px; border-radius:10px; border:1px solid #184018; background:#072507;
+      color:#bfffc4; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:.5rem
+    }
+    .btn:hover{ filter:brightness(1.06) }
+    .btn.alt{ background:#0a1535; border-color:#1b3c89; color:#b7d1ff }
+    .grid{ display:grid; gap:14px }
+    .card{
+      background:#101010; border:1px solid #1e2f1e; border-radius:14px; padding:16px;
+      box-shadow:0 18px 40px rgba(0,0,0,.3);
+    }
+    .row{ display:flex; flex-wrap:wrap; gap:12px; align-items:center }
+    .field{ display:flex; flex-direction:column; gap:6px; flex:1 1 220px; min-width:220px }
+    .field label{ color:#9bd0a0; font-size:.86rem }
+    .field input,.field textarea, .field select{
+      background:#0f0f0f; border:1px solid #203420; color:#e6ffe8; border-radius:10px; padding:10px 12px;
+      outline:none;
+    }
+    .field textarea{ min-height:90px; resize:vertical }
+    .hr{ border:0; border-top:1px solid #1e2f1e; margin:14px 0 }
+    .table{ width:100%; border-collapse:collapse; font-size:.95rem }
+    .table th,.table td{ border-bottom:1px solid #1e2f1e; padding:8px 10px; text-align:left }
+    .badge{ padding:3px 8px; border-radius:999px; font-size:.78rem; border:1px solid #234b23; background:#0f1f0f; color:#bfffc4 }
+    .danger{ background:#240d10; border-color:#5c1d25; color:#ffb9c1 }
+    .ok{ background:#0f2416; border-color:#1f3b24; color:#bfffd2 }
+    .note{ color:#b7ffc0; font-size:.92rem }
+
+    /* Vistas */
+    .view{ display:none }
+    .view.active{ display:block }
+
+    /* Faja superior con usuario */
+    .userbar{
+      display:flex; align-items:center; gap:10px; font-size:.9rem; color:#a8c8ad; opacity:.95
+    }
+
+    @media (max-width: 980px){
+      .app{ grid-template-columns: 70px 1fr }
+      .brand h1, .nav-title, .nav span.txt{ display:none }
+      .nav a{ justify-content:center }
+      .nav a.active{ background:#0c240c }
+      .sidebar{ padding:10px 8px }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="row">
-        <h2 style="margin:0;display:flex;align-items:center;gap:.6rem">
-          <img src="../asset/img/web.png" style="height:26px" alt=""> HTTP Conexión — Administración
-        </h2>
-        <a class="btn" href="/view/logout.html">Cerrar sesión</a>
-      </div>
-      <hr style="border-color:#1e2f1e;border-width:1px;border-style:solid;margin:14px 0">
-      <div id="who" style="opacity:.9;margin-bottom:10px"></div>
 
-      <!-- Aquí puedes ir montando tus secciones (General, Seguridad, Ads, Usuarios, etc.) -->
-      <p>Bienvenido al panel. Desde aquí podrás gestionar configuraciones, anuncios y usuarios.</p>
-    </div>
+  <!-- Fondo animado existente -->
+  <section aria-hidden="true">
+    <!-- menos spans para rendimiento en admin -->
+    ${"<span></span>".repeat(80)}
+    <div style="display:none"></div>
+  </section>
+
+  <!-- APP -->
+  <div class="app">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="../asset/img/web.png" alt="Logo">
+        <h1>CrisDEV • Panel</h1>
+      </div>
+      <div class="muted">Beta v2.0</div>
+
+      <div class="nav-section">
+        <div class="nav-title">Principal</div>
+        <ul class="nav">
+          <li><a href="#vps" data-view="vps" class="active"><span class="ico">🛠️</span><span class="txt">Conexiones VPS</span></a></li>
+          <li><a href="#repos" data-view="repos"><span class="ico">📁</span><span class="txt">Repositorios JSON</span></a></li>
+          <li><a href="#users" data-view="users"><span class="ico">👥</span><span class="txt">Usuarios</span></a></li>
+          <li><a href="#push" data-view="push"><span class="ico">🔔</span><span class="txt">Notificaciones</span></a></li>
+          <li><a href="#premium" data-view="premium"><span class="ico">💎</span><span class="txt">Premium</span></a></li>
+        </ul>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-title">Configuración</div>
+        <ul class="nav">
+          <li><a href="#app" data-view="app"><span class="ico">⚙️</span><span class="txt">App Config</span></a></li>
+          <li><a href="#firebase" data-view="firebase"><span class="ico">🔥</span><span class="txt">Firebase</span></a></li>
+        </ul>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-title">Sesión</div>
+        <ul class="nav">
+          <li><a href="#auth" data-view="auth"><span class="ico">🔐</span><span class="txt">Admin Auth</span></a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <main class="main">
+      <div class="header">
+        <div class="title"><h2 id="viewTitle">Conexiones VPS</h2></div>
+        <div class="userbar">
+          <span id="who"></span>
+          <a class="btn" href="/view/logout.html">Cerrar sesión</a>
+        </div>
+      </div>
+
+      <!-- ====== VISTAS ====== -->
+      <!-- VPS -->
+      <section id="view-vps" class="view active">
+        <div class="row" style="margin-bottom:10px">
+          <button id="btnNewVps" class="btn">+ Nueva VPS</button>
+          <span class="note">Conectaremos la terminal en una fase 2 (requiere backend con SSH proxy).</span>
+        </div>
+        <div class="card">
+          <table class="table" id="tblVps">
+            <thead><tr>
+              <th>Nombre</th><th>Host</th><th>Puerto</th><th>Usuario</th><th>Notas</th><th></th>
+            </tr></thead>
+            <tbody><!-- rows dinámicas --></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Repositorios JSON -->
+      <section id="view-repos" class="view">
+        <div class="card grid">
+          <div class="field">
+            <label>Link de repositorio (JSON)</label>
+            <input id="inpRepo" placeholder="https://tulink/archivo.json">
+          </div>
+          <div class="row">
+            <button id="btnSaveRepo" class="btn">Guardar</button>
+            <span class="note">La app puede leer este enlace para configuraciones/servidores.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Usuarios -->
+      <section id="view-users" class="view">
+        <div class="card">
+          <div class="row" style="justify-content:space-between">
+            <div class="row">
+              <button id="btnReloadUsers" class="btn">Actualizar lista</button>
+            </div>
+            <span class="note">Administra tiempo, bloqueos y acceso.</span>
+          </div>
+          <hr class="hr" />
+          <table class="table" id="tblUsers">
+            <thead><tr>
+              <th>Email</th><th>Último acceso</th><th>Expira</th><th>Estado</th><th>Minutos</th><th>Acciones</th>
+            </tr></thead>
+            <tbody><!-- rows dinámicas --></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Notificaciones -->
+      <section id="view-push" class="view">
+        <div class="card grid">
+          <div class="row">
+            <div class="field">
+              <label>Título</label><input id="pushTitle" placeholder="Aviso / Actualización" />
+            </div>
+            <div class="field">
+              <label>Prioridad</label>
+              <select id="pushPri">
+                <option value="normal">normal</option>
+                <option value="high">alta</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Mensaje</label>
+            <textarea id="pushBody" placeholder="Texto de la notificación/aviso…"></textarea>
+          </div>
+          <div class="row">
+            <button id="btnSendPush" class="btn alt">Enviar notificación</button>
+            <span class="note">Implementación inicial via <em>announcements</em> en Firestore (la app escucha y muestra). FCM se puede integrar después.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Premium (placeholder para tus reglas de negocio) -->
+      <section id="view-premium" class="view">
+        <div class="card grid">
+          <div class="field">
+            <label>Duración predeterminada (días) para nuevas cuentas</label>
+            <input id="premDays" type="number" min="1" value="15" />
+          </div>
+          <div class="row">
+            <button id="btnSavePremium" class="btn">Guardar</button>
+            <span class="note">Se aplicará para altas nuevas o “reiniciar tiempo”.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- App Config -->
+      <section id="view-app" class="view">
+        <div class="card grid">
+          <div class="row">
+            <div class="field"><label>Nombre de la app</label><input id="appName" placeholder="Mi VPN SSH" /></div>
+            <div class="field"><label>Package name</label><input id="packageName" placeholder="com.tupaquete.app" /></div>
+          </div>
+
+          <div class="row">
+            <div class="field"><label>AdMob App Open UnitId</label><input id="adAppOpen" placeholder="ca-app-pub-.../..." /></div>
+            <div class="field"><label>AdMob Banner UnitId</label><input id="adBanner" placeholder="ca-app-pub-.../..." /></div>
+            <div class="field"><label>AdMob Interstitial UnitId</label><input id="adInter" placeholder="ca-app-pub-.../..." /></div>
+          </div>
+
+          <div class="row">
+            <div class="field"><label>Rewarded UnitIds (separados por coma)</label><input id="adRewarded" placeholder="id1,id2,id3" /></div>
+            <div class="field"><label>Test mode</label>
+              <select id="adTest"><option value="false">false</option><option value="true">true</option></select>
+            </div>
+          </div>
+
+          <hr class="hr" />
+
+          <div class="row">
+            <div class="field"><label>Repositorio (link)</label><input id="repoLink" placeholder="https://tulink" /></div>
+            <div class="field"><label>Servidor — Usuario</label><input id="srvUser" placeholder="root" /></div>
+            <div class="field"><label>Servidor — Contraseña</label><input id="srvPass" placeholder="••••••" /></div>
+          </div>
+
+          <hr class="hr" />
+
+          <div class="row">
+            <div class="field"><label>Última versión</label><input id="latestVersion" placeholder="3.0.45" /></div>
+            <div class="field"><label>Versión mínima</label><input id="minVersion" placeholder="3.0.45" /></div>
+            <div class="field"><label>URL de actualización (Play o directa)</label><input id="updateUrl" placeholder="https://play.google.com/..." /></div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>Subir APK para actualización directa</label>
+              <input id="apkFile" type="file" accept=".apk" />
+              <small class="muted">Se sube a Firebase Storage y se guarda el link en la config.</small>
+            </div>
+            <div class="row" style="align-items:flex-end">
+              <button id="btnSaveApp" class="btn">Guardar configuración</button>
+              <span id="appMsg" class="badge" style="display:none"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Firebase Info -->
+      <section id="view-firebase" class="view">
+        <div class="card grid">
+          <div class="field">
+            <label>Proyecto</label>
+            <input id="fbProject" disabled />
+          </div>
+          <div class="field">
+            <label>Auth — email en sesión</label>
+            <input id="fbEmail" disabled />
+          </div>
+          <div class="row">
+            <span class="note">La seguridad final se hará con reglas de Firestore/Storage permitiendo solo correos autorizados.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Admin Auth -->
+      <section id="view-auth" class="view">
+        <div class="card grid">
+          <div class="row" style="justify-content:space-between">
+            <div>
+              <div class="note">Esta sesión controla quién puede escribir en la base de datos.</div>
+              <div id="authInfo" class="badge ok">Cargando…</div>
+            </div>
+            <a class="btn" href="/view/logout.html">Cerrar sesión</a>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <script type="module">
-    import { requireAuth, auth } from "../js/auth.js";
-    const user = await requireAuth("/view/login.html");
-    document.getElementById("who").textContent = `Sesión de: ${user.email}`;
-  </script>
+  <script type="module" src="../js/panel.js"></script>
 </body>
 </html>
