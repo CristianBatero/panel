@@ -6,94 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="../asset/img/web.png" />
   <!-- Tu fondo/tema -->
-  <link rel="stylesheet" href="../style.css" />
-  <style>
-    /* ===== LAYOUT DEL PANEL ===== */
-    body{min-height:100vh;background:#000;color:#dff5df; overflow:hidden;}
-    .app{
-      position:relative; z-index:10; /* queda sobre el fondo animado */
-      display:grid; grid-template-columns: 260px 1fr; gap:0; width:100vw; height:100vh;
-      backdrop-filter: none;
-    }
-    .sidebar{
-      background:#0b0b0b; border-right:1px solid #172c17; padding:14px; overflow:auto;
-    }
-    .brand{ display:flex; align-items:center; gap:.6rem; padding:6px 8px; opacity:.95 }
-    .brand img{ height:22px }
-    .brand h1{ font-size:1rem; margin:0; color:#b9ffbf; font-weight:600 }
-    .muted{ color:#8abf8f; font-size:.82rem }
-
-    .nav-section{ margin-top:16px; }
-    .nav-title{ color:#7ebf83; font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; margin:8px 10px }
-    .nav{ list-style:none; margin:0; padding:0 }
-    .nav a{
-      display:flex; align-items:center; gap:.6rem;
-      padding:10px 12px; margin:4px 0; border-radius:10px;
-      color:#dff5df; text-decoration:none; border:1px solid transparent; background:transparent;
-    }
-    .nav a:hover{ background:#0e1a0e; border-color:#1a311a }
-    .nav a.active{ background:#0c240c; border-color:#1e3f1e; color:#bfffc4 }
-    .nav .ico{ width:18px; text-align:center; opacity:.9 }
-
-    .main{ position:relative; overflow:auto; padding:18px 22px; }
-    .header{
-      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;
-    }
-    .title{ display:flex; align-items:center; gap:.6rem }
-    .title h2{ margin:0; font-weight:700 }
-    .btn{
-      padding:9px 14px; border-radius:10px; border:1px solid #184018; background:#072507;
-      color:#bfffc4; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:.5rem
-    }
-    .btn:hover{ filter:brightness(1.06) }
-    .btn.alt{ background:#0a1535; border-color:#1b3c89; color:#b7d1ff }
-    .grid{ display:grid; gap:14px }
-    .card{
-      background:#101010; border:1px solid #1e2f1e; border-radius:14px; padding:16px;
-      box-shadow:0 18px 40px rgba(0,0,0,.3);
-    }
-    .row{ display:flex; flex-wrap:wrap; gap:12px; align-items:center }
-    .field{ display:flex; flex-direction:column; gap:6px; flex:1 1 220px; min-width:220px }
-    .field label{ color:#9bd0a0; font-size:.86rem }
-    .field input,.field textarea, .field select{
-      background:#0f0f0f; border:1px solid #203420; color:#e6ffe8; border-radius:10px; padding:10px 12px;
-      outline:none;
-    }
-    .field textarea{ min-height:90px; resize:vertical }
-    .hr{ border:0; border-top:1px solid #1e2f1e; margin:14px 0 }
-    .table{ width:100%; border-collapse:collapse; font-size:.95rem }
-    .table th,.table td{ border-bottom:1px solid #1e2f1e; padding:8px 10px; text-align:left }
-    .badge{ padding:3px 8px; border-radius:999px; font-size:.78rem; border:1px solid #234b23; background:#0f1f0f; color:#bfffc4 }
-    .danger{ background:#240d10; border-color:#5c1d25; color:#ffb9c1 }
-    .ok{ background:#0f2416; border-color:#1f3b24; color:#bfffd2 }
-    .note{ color:#b7ffc0; font-size:.92rem }
-
-    /* Vistas */
-    .view{ display:none }
-    .view.active{ display:block }
-
-    /* Faja superior con usuario */
-    .userbar{
-      display:flex; align-items:center; gap:10px; font-size:.9rem; color:#a8c8ad; opacity:.95
-    }
-
-    @media (max-width: 980px){
-      .app{ grid-template-columns: 70px 1fr }
-      .brand h1, .nav-title, .nav span.txt{ display:none }
-      .nav a{ justify-content:center }
-      .nav a.active{ background:#0c240c }
-      .sidebar{ padding:10px 8px }
-    }
-  </style>
+  <link rel="stylesheet" href="../admin.css" />
 </head>
 <body>
-
-  <!-- Fondo animado existente -->
-  <section aria-hidden="true">
-    <!-- menos spans para rendimiento en admin -->
-    ${"<span></span>".repeat(80)}
-    <div style="display:none"></div>
-  </section>
 
   <!-- APP -->
   <div class="app">
@@ -161,17 +76,49 @@
 
       <!-- Repositorios JSON -->
       <section id="view-repos" class="view">
-        <div class="card grid">
+      <div class="card grid">
+        <div class="grid-2">
           <div class="field">
-            <label>Link de repositorio (JSON)</label>
-            <input id="inpRepo" placeholder="https://tulink/archivo.json">
+            <label>App</label>
+            <div class="row">
+              <select id="appSelect"></select>
+              <input id="appNameNew" type="text" placeholder="Nueva app…" />
+              <button id="btnCreateApp" class="btn btn-primary">Crear app</button>
+            </div>
+            <small class="help">Puedes administrar varios repos por app.</small>
           </div>
-          <div class="row">
-            <button id="btnSaveRepo" class="btn">Guardar</button>
-            <span class="note">La app puede leer este enlace para configuraciones/servidores.</span>
+          <div class="field">
+            <label>Repositorio</label>
+            <div class="row">
+              <input id="repoName" type="text" placeholder="Nombre del repositorio" />
+              <input id="repoFile" type="file" accept="application/json,.json" />
+              <button id="btnUploadRepo" class="btn btn-info">Subir / Actualizar</button>
+            </div>
+            <small class="help">Se guarda el .json completo en Storage y la metadata en Firestore.</small>
           </div>
         </div>
-      </section>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <table class="table" id="tblRepos">
+          <thead>
+            <tr>
+              <th>Nombre</th><th>Tamaño</th><th>Actualizado</th><th>URL</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody><!-- filas dinámicas --></tbody>
+        </table>
+      </div>
+
+      <div class="card" id="repoViewer" style="margin-top:12px; display:none">
+        <div class="row" style="justify-content:space-between">
+          <strong>Vista del JSON (sin filtros)</strong>
+          <button id="btnCloseViewer" class="btn">Cerrar</button>
+        </div>
+        <pre id="rawView" class="raw-view"></pre>
+      </div>
+    </section>
+
 
       <!-- Usuarios -->
       <section id="view-users" class="view">
@@ -194,29 +141,40 @@
 
       <!-- Notificaciones -->
       <section id="view-push" class="view">
-        <div class="card grid">
-          <div class="row">
-            <div class="field">
-              <label>Título</label><input id="pushTitle" placeholder="Aviso / Actualización" />
-            </div>
-            <div class="field">
-              <label>Prioridad</label>
-              <select id="pushPri">
-                <option value="normal">normal</option>
-                <option value="high">alta</option>
-              </select>
-            </div>
+      <div class="card grid">
+        <div class="grid-3">
+          <div class="field">
+            <label>Destino</label>
+            <select id="fcmTarget">
+              <option value="topic">Tópico</option>
+              <option value="token">Token</option>
+            </select>
           </div>
           <div class="field">
-            <label>Mensaje</label>
-            <textarea id="pushBody" placeholder="Texto de la notificación/aviso…"></textarea>
+            <label id="fcmTargetLabel">Tópico</label>
+            <input id="fcmTargetValue" type="text" placeholder="p. ej. all o app-com.paquete" />
           </div>
-          <div class="row">
-            <button id="btnSendPush" class="btn alt">Enviar notificación</button>
-            <span class="note">Implementación inicial via <em>announcements</em> en Firestore (la app escucha y muestra). FCM se puede integrar después.</span>
+          <div class="field">
+            <label>Prioridad</label>
+            <select id="fcmPriority">
+              <option value="normal">normal</option>
+              <option value="high">alta</option>
+            </select>
           </div>
         </div>
-      </section>
+
+        <div class="grid-2">
+          <div class="field"><label>Título</label><input id="fcmTitle" type="text" placeholder="Aviso / Actualización" /></div>
+          <div class="field"><label>Body</label><input id="fcmBody" type="text" placeholder="Mensaje…" /></div>
+        </div>
+
+        <div class="row">
+          <button id="btnSendFCM" class="btn btn-primary">Enviar notificación</button>
+          <small class="help">Usa Cloud Messaging (HTTP v1 vía Cloud Function callable).</small>
+        </div>
+      </div>
+    </section>
+
 
       <!-- Premium (placeholder para tus reglas de negocio) -->
       <section id="view-premium" class="view">
@@ -234,54 +192,47 @@
 
       <!-- App Config -->
       <section id="view-app" class="view">
-        <div class="card grid">
-          <div class="row">
-            <div class="field"><label>Nombre de la app</label><input id="appName" placeholder="Mi VPN SSH" /></div>
-            <div class="field"><label>Package name</label><input id="packageName" placeholder="com.tupaquete.app" /></div>
-          </div>
-
-          <div class="row">
-            <div class="field"><label>AdMob App Open UnitId</label><input id="adAppOpen" placeholder="ca-app-pub-.../..." /></div>
-            <div class="field"><label>AdMob Banner UnitId</label><input id="adBanner" placeholder="ca-app-pub-.../..." /></div>
-            <div class="field"><label>AdMob Interstitial UnitId</label><input id="adInter" placeholder="ca-app-pub-.../..." /></div>
-          </div>
-
-          <div class="row">
-            <div class="field"><label>Rewarded UnitIds (separados por coma)</label><input id="adRewarded" placeholder="id1,id2,id3" /></div>
-            <div class="field"><label>Test mode</label>
-              <select id="adTest"><option value="false">false</option><option value="true">true</option></select>
-            </div>
-          </div>
-
-          <hr class="hr" />
-
-          <div class="row">
-            <div class="field"><label>Repositorio (link)</label><input id="repoLink" placeholder="https://tulink" /></div>
-            <div class="field"><label>Servidor — Usuario</label><input id="srvUser" placeholder="root" /></div>
-            <div class="field"><label>Servidor — Contraseña</label><input id="srvPass" placeholder="••••••" /></div>
-          </div>
-
-          <hr class="hr" />
-
-          <div class="row">
-            <div class="field"><label>Última versión</label><input id="latestVersion" placeholder="3.0.45" /></div>
-            <div class="field"><label>Versión mínima</label><input id="minVersion" placeholder="3.0.45" /></div>
-            <div class="field"><label>URL de actualización (Play o directa)</label><input id="updateUrl" placeholder="https://play.google.com/..." /></div>
-          </div>
-
-          <div class="row">
-            <div class="field">
-              <label>Subir APK para actualización directa</label>
-              <input id="apkFile" type="file" accept=".apk" />
-              <small class="muted">Se sube a Firebase Storage y se guarda el link en la config.</small>
-            </div>
-            <div class="row" style="align-items:flex-end">
-              <button id="btnSaveApp" class="btn">Guardar configuración</button>
-              <span id="appMsg" class="badge" style="display:none"></span>
-            </div>
-          </div>
+      <div class="card grid">
+        <div class="grid-2">
+          <div class="field"><label>Nombre de la app</label><input id="appName" type="text" /></div>
+          <div class="field"><label>Package name</label><input id="packageName" type="text" /></div>
         </div>
-      </section>
+
+        <div class="grid-3">
+          <div class="field"><label>AdMob App Open</label><input id="adAppOpen" type="text" /></div>
+          <div class="field"><label>AdMob Banner</label><input id="adBanner" type="text" /></div>
+          <div class="field"><label>AdMob Interstitial</label><input id="adInter" type="text" /></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field"><label>Rewarded UnitIds (coma)</label><input id="adRewarded" type="text" /></div>
+          <div class="field"><label>Test mode</label><select id="adTest"><option>false</option><option>true</option></select></div>
+        </div>
+
+        <div class="grid-3">
+          <div class="field"><label>Repositorio (link)</label><input id="repoLink" type="text" /></div>
+          <div class="field"><label>Servidor — Usuario</label><input id="srvUser" type="text" /></div>
+          <div class="field"><label>Servidor — Contraseña</label><input id="srvPass" type="text" /></div>
+        </div>
+
+        <div class="grid-3">
+          <div class="field"><label>Última versión</label><input id="latestVersion" type="text" /></div>
+          <div class="field"><label>Versión mínima</label><input id="minVersion" type="text" /></div>
+          <div class="field"><label>URL de actualización</label><input id="updateUrl" type="text" /></div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>Subir APK (actualización directa)</label>
+            <input id="apkFile" type="file" accept=".apk" />
+            <small class="help">Se sube a Storage y se guarda el link en la config.</small>
+          </div>
+          <button id="btnSaveApp" class="btn btn-primary">Guardar configuración</button>
+          <span id="appMsg" class="badge" style="display:none"></span>
+        </div>
+      </div>
+    </section>
+
 
       <!-- Firebase Info -->
       <section id="view-firebase" class="view">
